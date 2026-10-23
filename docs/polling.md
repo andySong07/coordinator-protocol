@@ -65,3 +65,12 @@ Git”范围，必须由 coordinator 明确配置。
 - 能停止已完成项目；
 - 不把“没有新 commit”当成需要通知用户的事件。
 
+## 多 project 调度
+
+本机只运行一个通用 launchd job，每次启动短生命周期 dispatcher。Dispatcher 读取本机 project
+registry，分别扫描每个 project 的 Git main 和独立 cursor。不同 project 可以并行；同一 project
+只有文件范围不重叠、使用独立 worktree 的 task 可以并行；同一 task/round 固定串行。
+
+全局、每 actor、每 project 和每 task 的并发限制、锁键、公平队列、隔离与失败传播规则见
+`docs/dispatcher.md`。
+

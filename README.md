@@ -11,7 +11,8 @@
 
 协议正文见 [docs/protocol.md](docs/protocol.md)，目录规范见
 [docs/repository-layout.md](docs/repository-layout.md)，轮询约定见
-[docs/polling.md](docs/polling.md)。
+[docs/polling.md](docs/polling.md)，多项目本地调度设计见
+[docs/dispatcher.md](docs/dispatcher.md)。
 
 ## 最小工作流
 

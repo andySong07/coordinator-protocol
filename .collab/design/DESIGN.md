@@ -1,6 +1,6 @@
 ---
 design_id: "DESIGN-001"
-status: "changes_requested"
+status: "in_review"
 author: "codex"
 reviewer: "claude"
 ---
@@ -39,6 +39,10 @@ Codex 和 Claude 需要在一个项目内自主轮换 coordinator、developer、
 
 所有交付条件满足后只进入 `ready_for_user_confirmation`。Coordinator 必须向用户提供最终
 交付摘要并请求确认；只有用户明确同意后，才能提交 `CLOSE` commit 并结束 project。
+
+本机采用一个 launchd job 周期性启动短生命周期 dispatcher。Dispatcher 从本机 registry 扫描
+多个 project，使用全局、actor、project 和 task 四级并发约束。不同 project 可并行；同一
+project 的独立 task 可通过 worktree 并行；同一 task 的 developer/reviewer 严格串行。
 
 ## Interfaces / output format
 
@@ -79,6 +83,7 @@ Codex 和 Claude 需要在一个项目内自主轮换 coordinator、developer、
 3. 重复投递同一 commit，确认不会产生重复工作。
 4. 构造两个 subproject，确认角色交叉和 worktree 隔离规则可用。
 5. 确认未收到用户最终确认时，项目不能进入 `done` 或停止 timer。
+6. 构造至少两个 project 的 runnable event，验证公平调度、隔离 cursor 和单项目失败不阻塞其他项目。
 
 ## Rollback / reversibility
 

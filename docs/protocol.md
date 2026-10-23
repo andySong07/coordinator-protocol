@@ -76,6 +76,17 @@ Coordinator 按以下顺序启动项目：
 才把 project phase 从 `design` 改为 `implementation`。紧急修复也必须有轻量设计，允许和
 实现放在同一轮，但不能省略。
 
+### 严格回合屏障
+
+同一 task 同一时刻只能有一个 active actor。Developer 完成本轮全部修改后，以一个明确的
+handoff commit 请求 review，并把该 commit SHA 记录为 reviewer 的固定基线。交接后 developer
+与 coordinator 不得再修改该 task 的交付物、task 或 review 文件，直到 reviewer 提交本轮结论。
+
+Reviewer 只能审查 handoff 中声明的固定 SHA，并以一个 review commit 结束本轮。Review 期间
+收到的新需求进入下一 developer turn，不得插入当前审查范围。任何时刻不得存在两个 active
+review round。只有安全紧急情况可以中断；中断时 coordinator 必须先显式取消当前 review，建立
+新基线和新 round，不能让 reviewer 继续审查失效 SHA。
+
 ## 5. 任务状态机
 
 ```text
@@ -175,6 +186,10 @@ commit，除非该 commit 尚未发布且 coordinator 明确判定无人消费�
 
 共享仓库可以被多个 Agent 读取，但同一工作目录在任一时刻只有一个写者。并行 subproject
 使用独立 branch + worktree，避免两个 Agent 同时写一个 checkout。
+
+Developer 可以在自己的 branch 上产生内部 checkpoint commit，但只有一次完整 handoff 可以
+更新共享 `main`。Reviewer 工作期间 `main` 对同一 task 冻结。不同 project 拥有独立 Git repo，
+不同 project 的 `main` 可以并行推进。
 
 推荐分支：
 
@@ -277,4 +292,22 @@ Coordinator 不应仅因不确定就询问用户；应先收集证据并选择�
 - **Agent 超时**：轮询器不重做动作，只再次唤醒；以 task state 和 commit SHA 保证幂等。
 - **坏 commit**：追加修复 commit，禁止静默 amend 已被另一角色消费的 commit。
 - **协议违规**：coordinator 创建 `DECIDE` commit 记录纠正方式，然后从最后有效状态继续。
+
+## 12. 多 project dispatcher
+
+本机使用一个通用 `launchd` job，周期性启动短生命周期 dispatcher。Dispatcher 从本机 project
+registry 发现项目；每个 project 保持独立 Git repo、cursor、worktree、锁、失败计数和最终确认。
+
+并发边界：
+
+- 不同 project 默认可以并行；
+- 同一 project 中，只有交付物和控制文件不重叠的 task 才可用独立 worktree 并行；
+- 同一 task/round 的 developer 与 reviewer 永远串行；
+- coordinator 的集成、项目状态和最终确认一次只允许一个写者；
+- 全局、每个 Agent、每个 project 和每个 task 都有独立并发上限。
+
+默认限制为 `global=3`、`codex=2`、`claude=2`、`per-project=2`、`per-task=1`。如果某个 CLI
+不支持并发 session，相应 Agent 上限降为 1。调度采用 aging round-robin，先照顾等待最久的
+project，同时避免单个 project 占满全部槽位。一个 project 的失败只对该 project/job 退避，
+不得阻塞其他 project。完整设计见 `docs/dispatcher.md`。
 
