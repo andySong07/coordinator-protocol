@@ -1,5 +1,5 @@
 ---
-protocol_version: "0.1"
+protocol_version: "0.2"
 project_id: "<project-id>"
 title: "<title>"
 unique_name: "<globally-unique-project-name>"
@@ -14,6 +14,7 @@ coordination_enabled: true
 protocol_source: "<absolute-path>"
 protocol_commit: "<sha>"
 current_run_id: "<run-id|null>"
+resume_state: null
 ---
 
 # Project: <title>
@@ -60,6 +61,12 @@ current_run_id: "<run-id|null>"
 - shared repository: `<absolute-path>`
 - writable checkout policy: `separate-worktree`
 
+## Git identities
+
+- codex: `Codex Agent <codex-agent@localhost>`
+- claude: `Claude Agent <claude-agent@localhost>`
+- user: `<declared name> <<declared email>>`
+
 ## Subprojects
 
 | ID | Owner | Developer | Reviewer | Depends on | Status |
@@ -76,4 +83,7 @@ None.
 - requested_at: null
 - confirmed_at: null
 - confirmed_delivery_commit: null
+- user_quote_or_reference: null
+- channel: null
+- delivery_summary_path: null
 

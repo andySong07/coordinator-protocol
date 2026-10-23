@@ -20,12 +20,15 @@
 2. coordinator 评估复杂度、确认 dedicated project dir、创建设计文档。
 3. coordinator 指定 developer 与 reviewer；多模块项目创建 subproject，且每个
    subproject 的两个角色分别由 Codex 和 Claude 担任。
-4. developer 提交实现并请求 review。
-5. reviewer 逐条留下 comment。
+4. developer 在 task 分支提交一个固定回合；GitHub-backed 项目创建或更新该 task 的单一 Draft PR，然后冻结该 task。
+5. reviewer 针对固定 head SHA 完成一轮 review 并提交统一结论；本地项目采用相同屏障但可不使用 PR。
 6. developer 对每条 comment 标记 `accepted` 或 `disputed`。接受则修改；不接受则写明理由。
 7. reviewer 对更新内容复审。循环直到所有 blocking comment 都为 `resolved`，双方记录同意。
 8. coordinator 验证交付条件，将项目置为 `ready_for_user_confirmation`，并向用户发起最终确认。
 9. 只有收到用户明确确认后，coordinator 才能将项目置为 `done` 并关闭。
+
+正常交接由完成当前回合的一方主动唤醒另一方的 current session；actor-specific watchdog 仅用于
+恢复遗漏事件。一个 run 内复用 session 和 PR，不为每轮新建 session 或 PR。
 
 除有损操作、权限扩张、协议定义的强制升级事项和项目结束前的最终确认外，三个角色自行完成
 决策，不向用户请求选择。最终确认用于接受整体交付，不用于把中间技术分歧交给用户裁决。
@@ -38,4 +41,5 @@
 - [templates/REVIEW.md](templates/REVIEW.md)
 - [templates/DECISION.md](templates/DECISION.md)
 - [templates/BOOTSTRAP.md](templates/BOOTSTRAP.md)
+- [templates/AUTHORIZATION.md](templates/AUTHORIZATION.md)
 

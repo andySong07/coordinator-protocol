@@ -2,6 +2,7 @@
 task_id: "T-001"
 subproject: "root"
 status: "draft"
+resume_state: null
 developer: "codex|claude"
 reviewer: "codex|claude"
 depends_on: []

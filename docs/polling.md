@@ -3,7 +3,9 @@
 The normative rules are protocol §§5–7. Normal handoff calls `dispatcher kick-next`; actor-specific Codex
 and Claude launchd watchdogs scan every 2–5 minutes only as recovery.
 
-For each registered project an actor reads only `refs/heads/main`:
+For each registered local-only task an actor reads `refs/heads/main`; a GitHub-backed task reads the exact
+registered Draft PR head and submitted review decision instead. It never scans arbitrary branches or PRs.
+Local traversal is:
 
 ```text
 git rev-list --topo-order --reverse <cursor>..refs/heads/main
@@ -11,7 +13,8 @@ git rev-list --topo-order --reverse <cursor>..refs/heads/main
 
 It parses the mandatory `git interpret-trailers` envelope, validates project/subproject/task, rejects events
 from itself, and accepts only an exact Next-Actor/Next-Role match. A response is complete only when main has
-a descendant with `Responds-To` equal to that trigger. Duplicate/non-current responses are errors.
+a descendant on the registered transport ref with `Responds-To` equal to that trigger; a PR review turn also
+requires the submitted review decision. Duplicate/non-current responses are errors.
 
 Cursor is local, never committed. Task mutex excludes round. Actor capacity is a shared counting semaphore.
 Default execution timeout/lease/renewal are 30/35/5 minutes. PID absent plus expired lease is required before

@@ -16,7 +16,10 @@ Roles:
 
 Developer and reviewer for a task must differ. A coordinator who is also a disputing party cannot decide
 that dispute. A mutually defined objective test decides when possible; otherwise an open blocking review
-stands. The coordinator cannot close it by decision record.
+stands. The coordinator cannot close it by decision record. If the same dispute has no new evidence for two
+complete rounds and the coordinator is a disputing party, the coordinator sends the user one `ACTION REQUIRED`
+notice containing both parties' evidence and the blocked outcome. This is a deadlock report, not permission for
+the coordinator to self-decide; it is not repeated unless evidence or scope changes.
 
 ## 2. Project, run, and identity
 
@@ -53,6 +56,8 @@ second divergent business repository.
 
 Project `status`: `active | waiting_authorization | ready_for_user_confirmation | done | cancelled`.
 Project `phase`: `design | implementation | integration | delivery | closed`.
+`PROJECT.md.resume_state` stores the exact prior status/phase while waiting for authorization and is cleared on
+resume. It must be non-null exactly while `status: waiting_authorization`.
 
 - `active/design -> active/implementation`: coordinator, design approved.
 - `active/implementation -> active/integration`: coordinator, required tasks approved.
@@ -72,7 +77,8 @@ changes_requested to in_review; reviewer may reopen approved only with new evide
 Task states: `draft -> assigned -> in_progress -> review_requested`; reviewer chooses `approved` or
 `changes_requested`; developer returns changes_requested to in_progress then review_requested. Any
 nonterminal may enter `blocked` with a recorded dependency and return to its prior state, or `cancelled`
-when the project/user cancellation record covers it.
+when the project/user cancellation record covers it. `TASK.md.resume_state` stores the prior state while
+blocked and is cleared on resume. Reviewer may reopen `approved -> changes_requested` only with new evidence.
 
 ## 5. Turn barrier and review
 
@@ -85,7 +91,8 @@ task/<project>/<subproject>/<task>
 Developer makes one handoff to a fixed SHA, then freezes that task. Reviewer increments `current_round` in
 its review commit and makes one review commit. Only after that commit and lock release may developer act.
 New requirements wait for the next developer turn. Cancellation uses the same task mutex and an explicit
-`CANCEL-REVIEW` event.
+`cancel_review` event. It ends the active review round as `cancelled`, changes the task to `cancelled`, records
+the covering user/project cancellation, and sets both next actor and next role to `none`.
 
 Comment IDs never change. Status transitions:
 
@@ -100,9 +107,11 @@ or artifact fact. An interested coordinator still cannot close the comment.
 
 ## 6. Git and event envelope
 
-`main` is the only observed ref. Actors work in `collab/<subproject>/<task>/<actor>` worktrees. Handoff is
-fast-forward only. If main moved, actor rebases/cherry-picks its own recoverable commit in its worktree,
-revalidates, and retries; it never forces, discards unknown changes, or auto-resolves semantic conflicts.
+`main` is the integration ref. A local-only task observes `main`; a GitHub-backed task may instead register one
+Draft PR and observe its exact head ref plus submitted review decision until integration. Actors work in
+`collab/<subproject>/<task>/<actor>` worktrees. Handoff/integration is fast-forward only. If the target moved,
+the actor rebases/cherry-picks its own recoverable commit in its worktree, revalidates, and retries; it never
+forces, discards unknown changes, or auto-resolves semantic conflicts.
 
 Commit identity is declared exactly in project/registry for `codex`, `claude`, and `user`; validation is exact
 name/email equality. Automation never changes global config. “Published” means reachable from observed main;
@@ -118,7 +127,7 @@ Subproject: <id|root>
 Task: <globally-unique-id|PROJECT>
 Entity: project|design|task|review|authorization
 State: <entity state|unchanged>
-Action: design|review|respond|rereview|integrate|request_confirmation|close|none
+Action: init|bootstrap|design|review|respond|rereview|integrate|protocol_migrate|authorization_hold|authorization_resolve|cancel_review|request_confirmation|close|none
 Target-Commit: <sha|SELF|none>
 Responds-To: <current trigger sha|none>
 Next-Actor: codex|claude|user|none
@@ -131,12 +140,15 @@ ordered, single-valued, and mandatory. Project events use `Task: PROJECT`. `Stat
 alerts on duplicate response, non-current trigger, missing field, or envelope/file-state mismatch. Multiple
 triggers require separate response commits; v0.2 does not batch them.
 
+The `Action` trailer is the mechanical event type. In particular, a CLOSE commit is exactly
+`Entity: project`, `State: done`, `Action: close`; subject-line wording has no protocol meaning.
+
 ## 7. Dispatcher, permissions, and recovery
 
 Normal path is `dispatcher kick-next`; Codex and Claude actor-specific launchd watchdogs recover missed
 events. Each scans only main in topological reverse order from its local cursor. It wakes only on exact
-Next-Actor/Role and never because a file changed. Completion is a descendant response commit whose
-`Responds-To` equals the trigger.
+Next-Actor/Role and never because a file changed. Completion is a descendant response commit on the registered
+transport ref whose `Responds-To` equals the trigger; PR review turns also require a submitted review decision.
 
 Registry defaults to `$XDG_CONFIG_HOME/coordinator/registry.yaml` or
 `$HOME/.config/coordinator/registry.yaml`. Runtime defaults to `$XDG_STATE_HOME/coordinator` or
@@ -163,6 +175,11 @@ one-use authorization. Examples include destructive reset/clean/restore, deletin
 worktrees, stash drop, and immediate prune. Ordinary deletion is allowed only for files created by the agent
 in a reachable commit and recoverable through Git.
 
+An actor may clean or replace only its own abandoned, unpublished temporary output when the lease proves no
+live process owns it and an immutable base plus deterministic replay path are recorded. It must first preserve
+any unique diff on a recovery ref. Unknown ownership, unique data without a recovery ref, deletion of a ref or
+worktree, or cleanup outside the actor's declared runtime scope requires authorization.
+
 Authorization lives at `.collab/authorizations/A-NNN.md`: exact action/command, objects, impact, recovery,
 request time, status, user quote/reference, channel, decision time, expiry. Status is
 `pending|approved|denied|expired|consumed`; approval is exact-scope, single-use.
@@ -176,5 +193,5 @@ the complete record plus `done/closed`. Every actor validates it before stopping
 
 Completion requires approved design/tasks, no open blocking/question, verified integration, valid user
 confirmation, and no unknown changes. Nonblocking comments are resolved/withdrawn or explicitly backlogged.
-Publishing this protocol to GitHub occurs only after reviewer approval; the user has pre-authorized creation
-and first push of public repository `coordinator-protocol`.
+External publication follows the project authorization record; no authorization in one project is inherited
+by another. Project completion still requires reviewer approval and the separate final user confirmation.

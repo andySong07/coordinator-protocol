@@ -14,7 +14,7 @@ round_history: []
 ### R-1-01 — <short title>
 
 - severity: `blocking|non_blocking|question`
-- status: `open|accepted|disputed|addressed|resolved|withdrawn`
+- status: `open|accepted|disputed|answered|addressed|resolved|withdrawn`
 - location: `<path:line or document section>`
 - claim: <specific problem>
 - required_outcome: <observable result>

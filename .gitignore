@@ -1,5 +1,4 @@
-# Runtime locks and logs are local; cursors are intentionally tracked.
-.collab/runtime/locks/
-.collab/runtime/logs/
+# All dispatcher runtime state is local and must never be committed.
+.collab/runtime/
 *.swp
 .DS_Store

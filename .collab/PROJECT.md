@@ -1,5 +1,5 @@
 ---
-protocol_version: "0.1"
+protocol_version: "0.2"
 project_id: "coordinator-protocol"
 title: "Codex–Claude Coordinator Protocol"
 unique_name: "coordinator-protocol"
@@ -14,6 +14,7 @@ coordination_enabled: true
 protocol_source: "/Users/yuansong/Documents/coordinator"
 protocol_commit: "7c73888d158ebd461c491ba3deb64467de556b3b"
 current_run_id: "run-001"
+resume_state: null
 ---
 
 # Project: Codex–Claude Coordinator Protocol
@@ -83,10 +84,19 @@ None.
 - shared repository: `/Users/yuansong/Documents/coordinator`
 - writable checkout policy: `separate-worktree`
 
+## Git identities
+
+- codex: `Codex Agent <codex-agent@localhost>`
+- claude: `Claude Agent <claude-agent@localhost>`
+- user: `andySong07 <15460992+andySong07@users.noreply.github.com>`
+
 ## Final confirmation
 
 - status: `not_ready`
 - requested_at: null
 - confirmed_at: null
 - confirmed_delivery_commit: null
+- user_quote_or_reference: null
+- channel: null
+- delivery_summary_path: null
 

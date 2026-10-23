@@ -74,7 +74,7 @@ Registry 和 bootstrap 对 Codex/Claude 对称。最先接到用户请求的一�
 
 并发规则按从强到弱的顺序应用：
 
-1. 同一 task/round 只允许一个 active actor，developer 与 reviewer 严格串行。
+1. 同一 task 只允许一个 active actor，developer 与 reviewer 严格串行。
 2. 同一 project 的 coordinator 状态、集成和最终确认一次只允许一个写者。
 3. 同一 project 内只有交付物和控制文件都不重叠的 task 才能并行，并使用独立 branch/worktree。
 4. 不同 project 默认互相独立，可以并行。
@@ -133,14 +133,27 @@ target SHA 和允许的动作。不得复用另一个 project 的会话上下文
 不同 project 即使 task ID 相同也不会冲突，因为完整 identity 是：
 
 ```text
-<project-id>/<subproject-id>/<task-id>/<round>/<actor>/<role>
+<project-id>/<subproject-id>/<task-id>/<actor>/<role>
 ```
 
-## 6. Commit discovery
+## 6. Pull-request turn transport and commit discovery
 
-每个 project 独立维护扫描 cursor，只观察该仓库的 `refs/heads/main`。Dispatcher 不使用一个全局
-Git cursor。一次扫描可以从多个 project 各选出事件，但同一 project 内仍要检查 task 依赖、
-round barrier 和文件所有权。
+For GitHub-backed projects, one task normally uses one Draft PR. The developer pushes one fixed turn and
+requests review, then freezes the task. The reviewer reviews that head SHA and submits one complete review
+decision before the developer pushes the next turn. New commits remain in the same PR. PR comments are the
+discussion surface; committed Markdown and trailers remain the portable source of truth. A PR does not
+replace the task mutex or authorize concurrent edits. Local-only projects use the same barrier without a PR.
+
+每个 project 独立维护扫描 cursor。本地 task 观察 `refs/heads/main`；GitHub-backed task 在集成前
+观察 registry 中精确登记的 Draft PR head 和 review decision。Dispatcher 不使用一个全局 Git
+cursor，也不扫描任意 PR。一次扫描可以从多个 project 各选出事件，但同一 project 内仍要检查
+task 依赖、round barrier 和文件所有权。
+
+When a task is transported by Draft PR, the dispatcher also observes that registered PR's head and review
+decision, but never scans arbitrary repository PRs. It wakes the reviewer only after a developer handoff and
+wakes the developer only after the review is submitted. Actor sessions are resumed for the run; a new session
+is not created per commit or per review round. Watchdog scanning is recovery, while an explicit kick from the
+actor completing the turn is the normal path.
 
 事件开始后记录 trigger SHA。Agent 生成的交接 commit 必须包含 `Responds-To: <trigger-sha>`。
 Dispatcher 只有在目标 project 的 main 包含该回应 commit 后才把事件标为完成。

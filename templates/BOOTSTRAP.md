@@ -38,7 +38,8 @@ conflict and stop without changing either project.
 - `docs/polling.md`
 - relevant files under `templates/`
 
-Do not act if `protocol_source` is unavailable or `protocol_commit` does not match.
+Do not act if `protocol_source` is unavailable, the pinned commit does not exist, or required files cannot be
+read with `git show`. The pin is not required to equal HEAD.
 
 ## Scope and permissions
 
@@ -49,7 +50,7 @@ Do not act if `protocol_source` is unavailable or `protocol_commit` does not mat
 
 ## Expected response
 
-- action: `<design|review|respond|rereview|integrate>`
+- action: `<init|bootstrap|design|review|respond|rereview|integrate|protocol_migrate|authorization_hold|authorization_resolve|cancel_review|request_confirmation|close>`
 - required trailer: `Responds-To: <trigger_commit>`
 - next actor/role: `<actor>/<role>`
 
