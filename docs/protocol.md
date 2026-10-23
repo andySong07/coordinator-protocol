@@ -12,6 +12,7 @@ record; accepted decisions.
 Developer and reviewer must differ for a task. A coordinator involved in a dispute cannot decide it. Use an
 objective test when possible. After two complete rounds without new evidence, send the user one
 `ACTION REQUIRED` report containing both positions; do not silently deadlock or repeatedly notify.
+“New evidence” means a newly cited test result, requirement, specification, or artifact fact.
 
 ## 2. Cold start and records
 
@@ -55,13 +56,16 @@ in `TASK.md`. `cancel_review` cancels only the stale review and returns the task
 Every project begins with design. Implementation starts only after design approval; integration starts only
 after required task approval; delivery starts only after integration passes.
 
+Design states are `draft -> in_review`; reviewer approves or requests changes; developer returns
+`changes_requested -> in_review`; reviewer may reopen `approved` only with new evidence.
+
 ## 4. One turn barrier, two transports
 
 One task has one mutex: `task/<project>/<subproject>/<task>`.
 
 | Question | `pr` profile authority | `local` profile authority |
 |---|---|---|
-| Registered transport | `TASK.md.pull_request` | registered task ref |
+| Registered transport | `TASK.md.pull_request` | `refs/heads/main` |
 | Whose turn? | Draft = developer; Ready = reviewer | last event `Next-Actor`/`Next-Role` |
 | Fixed review target | review `commit_id`; COMMENT fallback `Reviewed-Head` | handoff `Target-Commit` |
 | Open findings | unresolved GitHub review threads | append-only timeline in `TASK.md` |
@@ -74,6 +78,8 @@ recovery only and never changes turn state.
 With distinct GitHub identities, use native APPROVE/REQUEST_CHANGES and branch protection. With shared
 credentials, use one COMMENT review containing `[actor/role]`, `Actor-Decision: approved|changes_requested`,
 and `Reviewed-Head: <sha>`. Those names are fixed. After changes requested, return the PR to Draft.
+`cancel_review` cancels the active review round, returns the task to `in_progress`, and permits a new fixed
+handoff.
 
 ## 5. Findings and agreement
 
@@ -102,6 +108,9 @@ Required commit trailers are selected only from `TASK.md.transport_profile`:
 | `Action` | authorization, confirmation, migration, cancellation, close | required |
 | `Project`, `Subproject`, `Entity`, `State` | — | required |
 | `Target-Commit`, `Responds-To`, `Next-Actor`, `Next-Role` | — | required |
+
+PR `Action` is exactly one of `authorization | request_confirmation | migration | cancel_review | cancel_task |
+close`. It is omitted for ordinary design/review/respond commits.
 
 Local `Action` is one of `init | bootstrap | design | review | respond | integrate | migrate |
 authorization_hold | authorization_resolve | cancel_review | cancel_task | request_confirmation | close`.

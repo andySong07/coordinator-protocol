@@ -1,5 +1,5 @@
 ---
-protocol_version: "0.4-draft"
+protocol_version: "0.4"
 project_id: "coordinator-protocol"
 title: "Codex–Claude Coordinator Protocol"
 unique_name: "coordinator-protocol"

@@ -26,6 +26,9 @@ Read the protocol from the pinned commit with `git show`; do not compare the pin
 for T-002 in a separate writable worktree. Unattended execution must fail closed and must not bypass approval
 or sandbox controls. Review the fixed PR head and submit one complete review decision.
 
+The pinned commit is the operating protocol for this run; the PR head is the proposed v0.4 protocol submitted
+for review.
+
 The current run predates the worktree rule and temporarily used the shared checkout. Starting with the Draft
 PR handoff, each actor must use its declared worktree or an equivalent isolated checkout registered by the
 coordinator. After task approval, coordinator makes a dedicated migration commit that pins this project and

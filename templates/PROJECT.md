@@ -81,6 +81,7 @@ None.
 
 - status: `not_ready|awaiting_user|confirmed`
 - requested_at: null
+- requested_delivery_commit: null
 - confirmed_at: null
 - confirmed_delivery_commit: null
 - user_quote_or_reference: null
