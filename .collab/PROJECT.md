@@ -55,6 +55,7 @@ created_at: "2026-10-23T10:00:00-07:00"
 - [x] Templates cover project, design, task, review and decision
 - [ ] Polling adapter reference implementation exists
 - [ ] End-to-end dry run passes
+- [ ] User explicitly confirms project completion
 
 ## Role assignment rationale
 
@@ -68,4 +69,11 @@ created_at: "2026-10-23T10:00:00-07:00"
 ## Authorization holds
 
 None.
+
+## Final confirmation
+
+- status: `not_ready`
+- requested_at: null
+- confirmed_at: null
+- confirmed_delivery_commit: null
 

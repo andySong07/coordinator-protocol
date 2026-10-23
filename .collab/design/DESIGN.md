@@ -36,6 +36,9 @@ Codex 和 Claude 需要在一个项目内自主轮换 coordinator、developer、
 接受或反驳，reviewer 负责最终 resolved/withdrawn。连续两轮无新证据时 coordinator 用实验、
 可逆方案或 decision record 收敛，而不是让用户裁决普通技术问题。
 
+所有交付条件满足后只进入 `ready_for_user_confirmation`。Coordinator 必须向用户提供最终
+交付摘要并请求确认；只有用户明确同意后，才能提交 `CLOSE` commit 并结束 project。
+
 ## Interfaces / output format
 
 - Project control surface: `.collab/PROJECT.md`
@@ -74,6 +77,7 @@ Codex 和 Claude 需要在一个项目内自主轮换 coordinator、developer、
 2. 构造 design → review → disputed → revised → approved 的 dry run。
 3. 重复投递同一 commit，确认不会产生重复工作。
 4. 构造两个 subproject，确认角色交叉和 worktree 隔离规则可用。
+5. 确认未收到用户最终确认时，项目不能进入 `done` 或停止 timer。
 
 ## Rollback / reversibility
 

@@ -15,7 +15,8 @@ Agent 才能修改交付物、Markdown、状态和 Git。这样轮询器可以�
 
 - 活跃项目：30–60 秒；
 - 等待用户授权：5 分钟，仅检查授权结果，不重复提醒；
-- `done` 或 `paused`：停止 timer。
+- `done` 或 `paused`：停止 timer。`ready_for_user_confirmation` 期间不得停止 timer，但仅处理
+  用户确认或修改请求，不重复发送确认提醒。
 
 轮询应加入最多 10% 随机抖动，避免两个 Agent 永远在同一瞬间抢锁。
 

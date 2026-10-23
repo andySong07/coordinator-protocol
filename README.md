@@ -23,9 +23,11 @@
 5. reviewer 逐条留下 comment。
 6. developer 对每条 comment 标记 `accepted` 或 `disputed`。接受则修改；不接受则写明理由。
 7. reviewer 对更新内容复审。循环直到所有 blocking comment 都为 `resolved`，双方记录同意。
-8. coordinator 验证交付条件并关闭项目。
+8. coordinator 验证交付条件，将项目置为 `ready_for_user_confirmation`，并向用户发起最终确认。
+9. 只有收到用户明确确认后，coordinator 才能将项目置为 `done` 并关闭。
 
-除有损操作、权限扩张或协议定义的强制升级事项外，三个角色自行完成决策，不向用户请求选择。
+除有损操作、权限扩张、协议定义的强制升级事项和项目结束前的最终确认外，三个角色自行完成
+决策，不向用户请求选择。最终确认用于接受整体交付，不用于把中间技术分歧交给用户裁决。
 
 ## 文件模板
 

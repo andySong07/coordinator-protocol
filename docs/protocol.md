@@ -27,7 +27,8 @@ Agent 不得把普通技术分歧升级给用户。分歧必须先通过证据�
 - 把复杂项目拆成边界清晰的 subproject，并管理依赖和集成顺序；
 - 不代替 developer 自审，也不代替 reviewer 批准；
 - 当循环停滞时选择实验、缩小范围或作出项目内决策；
-- 验证完成条件并关闭项目。
+- 验证完成条件，将项目置为 `ready_for_user_confirmation`，向用户发起最终确认；只有用户明确
+  确认后才关闭项目。
 
 ### Developer
 
@@ -80,7 +81,8 @@ Coordinator 按以下顺序启动项目：
 ```text
 draft -> assigned -> in_progress -> review_requested
       -> changes_requested -> in_progress -> review_requested
-      -> approved -> integrated -> done
+      -> approved -> integrated -> ready_for_user_confirmation
+      -> user_confirmed -> done
 ```
 
 允许的写入者：
@@ -94,7 +96,9 @@ draft -> assigned -> in_progress -> review_requested
 | `changes_requested` | reviewer | 至少一个 open blocking comment |
 | `approved` | reviewer | 无 open blocking comment |
 | `integrated` | coordinator | 依赖和集成验证通过 |
-| `done` | coordinator | 项目完成条件满足 |
+| `ready_for_user_confirmation` | coordinator | 项目完成条件满足，已准备整体交付摘要 |
+| `user_confirmed` | coordinator | 用户已明确接受项目整体交付 |
+| `done` | coordinator | 已记录用户确认并完成关闭动作 |
 
 状态只能前进到表中允许的相邻状态；重新打开时由 reviewer 将 `approved` 改为
 `changes_requested` 并创建新 comment。
@@ -188,7 +192,7 @@ Agent 只处理满足以下条件的 commit：
 Agent 完成动作后更新 `.collab/runtime/cursors/<actor>-<role>.txt`。Runtime cursor 默认可提交，
 以便两个独立进程共享进度；它只能包含最后处理的 commit SHA，不包含锁或 PID。
 
-## 8. 一致与完成
+## 8. 一致、用户确认与完成
 
 “达成一致”必须是显式状态，而不是没有新消息：
 
@@ -200,6 +204,17 @@ Agent 完成动作后更新 `.collab/runtime/cursors/<actor>-<role>.txt`。Runti
 
 Non-blocking comment 可以带入 backlog，但必须由 coordinator 明确接受为后续事项。
 
+技术一致和集成验证通过后，项目仍未结束。Coordinator 必须：
+
+1. 将项目状态设为 `ready_for_user_confirmation`；
+2. 向用户提供最终交付摘要，包括完成内容、验证结果、已知限制、遗留 backlog 和有无未提交改动；
+3. 明确询问用户是否确认结束该 project；
+4. 等待用户明确确认，不把沉默、超时或对某个中间成果的认可视作最终确认；
+5. 收到确认后记录确认时间和对应交付 commit，提交 `CLOSE` commit，再把状态设为 `done`。
+
+如果用户要求修改，coordinator 将项目恢复到相应的 `design`、`implementation` 或
+`changes_requested` 阶段，重新进入 developer/reviewer 闭环；修改完成后必须再次发起最终确认。
+
 ## 9. Coordinator 的自主决策边界
 
 Coordinator 可以自主：选择技术方案、拆分任务、调整顺序、定义实验、接受可回滚取舍、
@@ -209,7 +224,7 @@ Coordinator 不应仅因不确定就询问用户；应先收集证据并选择�
 
 ## 10. 必须向用户请求授权的事项
 
-只有以下动作需要暂停并请求用户：
+以下动作需要暂停并请求用户：
 
 - 删除或不可恢复地覆盖用户数据；
 - 强制改写共享 Git 历史、删除远端分支或覆盖未知改动；
@@ -217,6 +232,9 @@ Coordinator 不应仅因不确定就询问用户；应先收集证据并选择�
 - 获取新的账户权限、凭据或扩大已授权范围；
 - 需求之间存在无法通过证据消除的冲突，且任何选择都会造成不可逆业务后果；
 - 平台本身要求交互式授权。
+
+此外，所有 project 在结束前都必须请求用户进行最终确认。最终确认是正常交付门禁，不属于
+有损操作授权；在确认前不得停止项目 timer、归档项目或把状态写为 `done`。
 
 请求必须写明：准确动作、影响对象、为什么不可逆、恢复方式（如有）。等待授权期间可以继续
 不依赖该动作的工作。

@@ -41,6 +41,7 @@ created_at: "<ISO-8601>"
 - [ ] All tasks approved
 - [ ] Integration verification passed
 - [ ] No open blocking comments
+- [ ] User explicitly confirmed project completion
 
 ## Role assignment rationale
 
@@ -55,4 +56,11 @@ created_at: "<ISO-8601>"
 ## Authorization holds
 
 None.
+
+## Final confirmation
+
+- status: `not_ready|awaiting_user|confirmed`
+- requested_at: null
+- confirmed_at: null
+- confirmed_delivery_commit: null
 
