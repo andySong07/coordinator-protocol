@@ -1,5 +1,5 @@
 ---
-protocol_version: "0.2"
+protocol_version: "0.3"
 project_id: "<project-id>"
 title: "<title>"
 unique_name: "<globally-unique-project-name>"

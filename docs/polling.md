@@ -1,10 +1,12 @@
 # Polling and wake-up contract
 
-The normative rules are protocol §§5–7. Normal handoff calls `dispatcher kick-next`; actor-specific Codex
-and Claude launchd watchdogs scan every 2–5 minutes only as recovery.
+The normative rules are protocol §§5–7. Normal handoff actively resumes the next actor's current session;
+actor-specific Codex and Claude pollers scan every 2–5 minutes only as recovery. They notify but never own or
+change turn state. A future dispatcher may optimize multi-project scheduling without changing this contract.
 
-For each registered local-only task an actor reads `refs/heads/main`; a GitHub-backed task reads the exact
-registered Draft PR head and submitted review decision instead. It never scans arbitrary branches or PRs.
+For each registered local-only task an actor reads `refs/heads/main`; a `pr` task reads only its registered PR's
+`isDraft`, head SHA, review decision, and unresolved blocking/question threads. Draft wakes developer; Ready
+wakes reviewer. It never scans arbitrary branches or PRs and never changes turn state itself.
 Local traversal is:
 
 ```text
@@ -24,6 +26,6 @@ Unattended CLI invocation is fail-closed: workspace-write or stricter, explicit 
 bypass, no automatic elevation. Interactive permission or authentication exits and creates an authorization
 hold. `done` or valid user-requested `cancelled` is required to stop a project watchdog.
 
-Different projects may run concurrently within global/actor/project limits. Independent tasks in one project
-need separate worktrees and nonoverlapping ownership; one task remains strictly serial. Jitter only reduces
-fast-forward/semaphore contention.
+Different projects may run concurrently. Independent tasks in one project need separate worktrees and
+nonoverlapping ownership; one task remains strictly serial. Full cross-project scheduling, leases, fairness,
+and semaphores are deferred to the dispatcher implementation task. Jitter only reduces handoff contention.

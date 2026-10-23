@@ -1,8 +1,10 @@
 ---
 task_id: "T-001"
 subproject: "root"
-status: "draft"
+status: "draft|assigned|in_progress|review_requested|changes_requested|approved|blocked|cancelled|derived"
 resume_state: null
+transport_profile: "pr|local"
+pull_request: null
 developer: "codex|claude"
 reviewer: "codex|claude"
 depends_on: []

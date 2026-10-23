@@ -1,5 +1,5 @@
 ---
-protocol_version: "0.2"
+protocol_version: "0.3"
 project_id: "coordinator-protocol"
 title: "Codex–Claude Coordinator Protocol"
 unique_name: "coordinator-protocol"
@@ -59,8 +59,8 @@ resume_state: null
 - [ ] Design approved by Claude reviewer
 - [x] Protocol draft exists
 - [x] Templates cover project, design, task, review and decision
-- [ ] Polling adapter reference implementation exists
-- [ ] End-to-end dry run passes
+- [x] Wake/poll adapter contract exists (implementation is a separate task)
+- [x] End-to-end PR review dry run passes through PR #2
 - [ ] User explicitly confirms project completion
 
 ## Role assignment rationale

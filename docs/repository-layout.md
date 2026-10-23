@@ -25,7 +25,8 @@
 约束：
 
 - `PROJECT.md` 是角色、阶段、范围和完成条件的 source of truth。
-- 每个 task 和 review 各有一个文件，避免多人编辑同一大文件。
+- 每个 task 有最小 transport manifest。`local` review 使用 append-only 文件；`pr` review 文件仅在
+  integration 时由 coordinator 从 GitHub API 生成，包含 review/thread ID 与 commit_id，禁止手改。
 - Decision record 只追加，不回写历史结论；新决策用 `supersedes` 指向旧记录。
 - 自动化不得把临时锁、PID、日志噪音或凭据提交到仓库。
 - Cursor、lease、semaphore、失败计数等 runtime 状态只保存在本机 state 目录，永不提交。

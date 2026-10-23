@@ -14,6 +14,8 @@ peer_branch: "collab/root/root-T-001/claude-review"
 protocol_source: "/Users/yuansong/Documents/coordinator"
 protocol_commit: "7c73888d158ebd461c491ba3deb64467de556b3b"
 task_id: "T-001"
+transport_profile: "pr"
+pull_request: "https://github.com/andySong07/coordinator-protocol/pull/2"
 trigger_commit: "7c73888d158ebd461c491ba3deb64467de556b3b"
 session_action: "resume"
 ---

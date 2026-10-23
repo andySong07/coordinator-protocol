@@ -40,10 +40,14 @@ Codex 和 Claude 需要在一个项目内自主轮换 coordinator、developer、
 所有交付条件满足后只进入 `ready_for_user_confirmation`。Coordinator 必须向用户提供最终
 交付摘要并请求确认；只有用户明确同意后，才能提交 `CLOSE` commit 并结束 project。
 
-正常路径由提交方调用 dispatcher 即时启动下一 actor；Codex 和 Claude 各自的 launchd watchdog
-负责恢复遗漏交接。两者共享短生命周期 dispatcher，从本机 registry 扫描多个 project，使用
-全局、actor、project 和 task 四级并发约束。不同 project 可并行；同一 project 的独立 task 可
-通过 worktree 并行；同一 task 的 developer/reviewer 严格串行。
+v0.3 定义两种显式 transport profile。`pr` 用 Draft/Ready/review commit_id 作为实时回合状态，
+GitHub review thread 作为实时 comment 权威；`local` 用不可变 Git trigger/response 和 Markdown
+timeline。两种模式都复用 current session，主动唤醒下一方，轻量 poller 只恢复漏掉的通知。
+多 project dispatcher、lease、公平调度和 semaphore 作为后续独立实现任务，不再是核心协议依赖。
+
+PR 模式在集成时由 coordinator 从 GitHub API 生成只读 Markdown review snapshot，保留 review/thread
+ID 和 commit_id；它不构成第二套可变状态。开发者和 reviewer 使用不同 GitHub identity 时可启用
+branch protection 和原生 approval；共享账号期间使用带 actor/role 与固定 SHA 的 COMMENT decision。
 
 Coordinator 是用户在每次创建 project 时显式启用并指定的可选能力。Project 可从 Codex 或
 Claude 任一端发起；coordinator 必须先读取固定 commit 的本机制，再通过 BOOTSTRAP handoff
@@ -80,7 +84,7 @@ Project name 和 project ID 在本机 registry 中唯一。双方在创建前先
 ## Risks and mitigations
 
 - 两个 Agent 同时写 checkout：使用单写者规则和 subproject worktree。
-- Timer 重复唤醒：使用 commit cursor 和状态检查实现幂等。
+- Poller 重复唤醒：PR 模式检查 Draft/Ready/review，local 模式检查 trigger/response，实现幂等。
 - Review 无限循环：两轮无新证据触发 coordinator 收敛规则。
 - Commit body 漂移：固定字段并在后续实现校验器。
 - CLI 差异：把唤醒方式隔离为 timer adapter。

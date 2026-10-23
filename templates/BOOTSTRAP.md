@@ -14,6 +14,8 @@ peer_branch: "collab/<scope>/<actor>"
 protocol_source: "<absolute-path>"
 protocol_commit: "<sha>"
 task_id: "<task-id>"
+transport_profile: "pr|local"
+pull_request: null
 trigger_commit: "<sha>"
 target_commit: "<sha>"
 session_action: "create|resume"
@@ -34,7 +36,7 @@ conflict and stop without changing either project.
 
 - `README.md`
 - `docs/protocol.md`
-- `docs/dispatcher.md`
+- `docs/dispatcher.md` only when working on the deferred dispatcher implementation
 - `docs/polling.md`
 - relevant files under `templates/`
 
@@ -51,7 +53,7 @@ read with `git show`. The pin is not required to equal HEAD.
 ## Expected response
 
 - action: `<init|bootstrap|design|review|respond|rereview|integrate|protocol_migrate|authorization_hold|authorization_resolve|cancel_review|cancel_task|request_confirmation|close>`
-- required trailer: `Responds-To: <trigger_commit>`
+- required trailers: for `pr`, `Task`/`Actor`/`Role` plus conditional `Action`; for `local`, the full protocol envelope including `Responds-To: <trigger_commit>`
 - next actor/role: `<actor>/<role>`
 
 ## Validation
