@@ -95,13 +95,17 @@ One task has one mutex independent of round:
 task/<project>/<subproject>/<task>
 ```
 
+The light adapter implements this mutex with the minimal per-task lease defined in §7; it is part of the core
+turn-safety contract, not the deferred fair-scheduling dispatcher.
+
 Each task manifest declares exactly one `transport_profile`: `pr` or `local`; validators never infer it.
 
 For `pr`, one task has one GitHub PR. Draft means developer turn. The developer pushes, then marks the PR
 ready to hand off and freezes the task. Ready means reviewer turn. A GitHub review and its `commit_id` define
 the round. Reviewer ends with APPROVE, or REQUEST_CHANGES followed by conversion back to Draft. When shared
-GitHub credentials prevent native decisions, a COMMENT review with `[actor/role]`, fixed SHA, and
-`Actor-Decision: approved|changes_requested` is equivalent but cannot satisfy protected-branch approval.
+GitHub credentials prevent native decisions, a COMMENT review with `[actor/role]`, fixed SHA,
+`Actor-Decision: approved|changes_requested`, and `Reviewed-Head: <sha>` is equivalent but cannot satisfy
+protected-branch approval. These field names are fixed; actor-specific variants are invalid.
 
 For `local`, the developer makes one event handoff to a fixed SHA, then freezes the task. Reviewer makes one
 response event. Only after that response and mutex release may developer act. Both profiles resume the current
@@ -193,10 +197,13 @@ The multi-project dispatcher, fairness policy, and semaphores are a separate imp
 Registry defaults to `$XDG_CONFIG_HOME/coordinator/registry.yaml` or
 `$HOME/.config/coordinator/registry.yaml`. Runtime defaults to `$XDG_STATE_HOME/coordinator` or
 `$HOME/.local/state/coordinator`. Registry overrides are explicit. Light poller state contains only registered
-project/task transport mapping, last observed SHA/decision, and failure count. It refuses to launch when the
-same task already has a live job. Default execution timeout is 30 minutes; success resets failures and three
-consecutive failures create one coordinator attention notice with backoff. Leases, global semaphores, and fair
-multi-project scheduling belong to the deferred dispatcher task.
+project/task transport mapping, last observed SHA/decision, failure count, and one minimal lease per active
+task. The lease contains PID, base SHA, start time, and expiry; it is stale only when the PID is absent and the
+expiry has passed. The adapter refuses to launch while a non-stale lease exists and releases the lease only
+after validating the turn-ending event. Default execution timeout is 30 minutes and lease duration is 35
+minutes, renewed every 5 minutes. Success resets failures; three consecutive failures create one coordinator
+attention notice with backoff. Global semaphores, fairness leases, and multi-project scheduling belong to the
+deferred dispatcher task.
 
 Unattended launch is fail-closed. Codex uses workspace-write sandbox with no automatic escalation. Claude
 uses an explicit tool/path allowlist and noninteractive denial. Both prohibit bypass/dangerous modes. Network

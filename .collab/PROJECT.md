@@ -60,7 +60,7 @@ resume_state: null
 - [x] Protocol draft exists
 - [x] Templates cover project, design, task, review and decision
 - [x] Wake/poll adapter contract exists (implementation is a separate task)
-- [x] End-to-end PR review dry run passes through PR #2
+- [ ] End-to-end v0.3 PR dry run passes through merge and generated review snapshot
 - [ ] User explicitly confirms project completion
 
 ## Role assignment rationale
