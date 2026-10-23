@@ -109,7 +109,7 @@ Required commit trailers are selected only from `TASK.md.transport_profile`:
 | `Project`, `Subproject`, `Entity`, `State` | — | required |
 | `Target-Commit`, `Responds-To`, `Next-Actor`, `Next-Role` | — | required |
 
-PR `Action` is exactly one of `authorization | request_confirmation | migration | cancel_review | cancel_task |
+PR `Action` is exactly one of `authorization | request_confirmation | migrate | cancel_review | cancel_task |
 close`. It is omitted for ordinary design/review/respond commits.
 
 Local `Action` is one of `init | bootstrap | design | review | respond | integrate | migrate |
@@ -133,7 +133,8 @@ A one-use user grant is required before losing uncommitted/unique data, overwrit
 outside allowed roots, publishing externally, messaging third parties, spending money, or expanding permission.
 Record exact action, objects, impact, recovery, user quote/reference, channel/time, expiry, and consumption in
 `.collab/authorizations/A-NNN.md`. A consumed v0.4 authorization names exactly one reachable `action_commit`
-whose `Action` trailer matches the grant; `SELF` means the commit containing that record.
+whose `Action` trailer matches the grant. `SELF` is allowed only in the introducing commit; any later amendment
+replaces it with that commit's explicit SHA.
 
 An actor may recover only its own abandoned temporary output after the lease proves no live owner and any
 unique diff is preserved on a recovery ref. Unknown ownership, unrecoverable data, or ref/worktree deletion

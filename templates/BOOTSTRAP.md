@@ -52,7 +52,7 @@ read with `git show`. The pin is not required to equal HEAD.
 
 ## Expected response
 
-- action (`pr`, only when required): `<authorization|request_confirmation|migration|cancel_review|cancel_task|close>`
+- action (`pr`, only when required): `<authorization|request_confirmation|migrate|cancel_review|cancel_task|close>`
 - action (`local`): `<init|bootstrap|design|review|respond|integrate|migrate|authorization_hold|authorization_resolve|cancel_review|cancel_task|request_confirmation|close>`
 - required trailers: for `pr`, `Task`/`Actor`/`Role` plus conditional `Action`; for `local`, the full protocol envelope including `Responds-To: <trigger_commit>`
 - next actor/role: `<actor>/<role>`
