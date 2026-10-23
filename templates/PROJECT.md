@@ -1,5 +1,5 @@
 ---
-protocol_version: "0.3"
+protocol_version: "0.4"
 project_id: "<project-id>"
 title: "<title>"
 unique_name: "<globally-unique-project-name>"
@@ -85,5 +85,4 @@ None.
 - confirmed_delivery_commit: null
 - user_quote_or_reference: null
 - channel: null
-- delivery_summary_path: null
 

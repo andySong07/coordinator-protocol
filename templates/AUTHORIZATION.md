@@ -6,6 +6,7 @@ requested_at: "<ISO-8601>"
 decided_at: null
 expires_at: null
 consumed_at: null
+action_commit: null
 ---
 
 # Authorization: <short purpose>

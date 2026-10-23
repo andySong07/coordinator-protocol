@@ -1,10 +1,10 @@
 ---
-protocol_version: "0.3"
+protocol_version: "0.4-draft"
 project_id: "coordinator-protocol"
 title: "Codex–Claude Coordinator Protocol"
 unique_name: "coordinator-protocol"
-phase: "delivery"
-status: "ready_for_user_confirmation"
+phase: "design"
+status: "active"
 complexity: "standard"
 coordinator: "codex"
 developer: "codex"
@@ -56,11 +56,11 @@ resume_state: null
 
 ## Completion criteria
 
-- [x] Design approved by Claude reviewer
+- [ ] v0.4 simplification approved by Claude reviewer
 - [x] Protocol draft exists
 - [x] Templates cover project, design, task, review and decision
 - [x] Wake/poll adapter contract exists (implementation is a separate task)
-- [x] End-to-end v0.3 PR dry run passes through merge and generated review snapshot (`.collab/reviews/T-001.snapshot.md`)
+- [ ] v0.4 passes simplicity/audit acceptance tests S-1 through S-6
 - [ ] User explicitly confirms project completion
 
 ## Role assignment rationale
@@ -92,12 +92,13 @@ None.
 
 ## Final confirmation
 
-- status: `awaiting_user`
-- requested_at: "2026-10-23T19:51:11Z"
-- requested_delivery_commit: "ef3894756450478a7802257fb3fc78e1a2c707b2"
+- status: `not_ready`
+- requested_at: null
+- requested_delivery_commit: null
 - confirmed_at: null
 - confirmed_delivery_commit: null
 - user_quote_or_reference: null
 - channel: null
-- delivery_summary_path: ".collab/DELIVERY.md"
+- invalidated_at: "2026-10-23"
+- invalidation_reason: "User requested a simpler, clearer, more auditable protocol before confirmation."
 

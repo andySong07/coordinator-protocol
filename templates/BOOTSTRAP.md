@@ -36,7 +36,7 @@ conflict and stop without changing either project.
 
 - `README.md`
 - `docs/protocol.md`
-- `docs/dispatcher.md` only when working on the deferred dispatcher implementation
+- implementation guides only when working on the corresponding adapter
 - `docs/polling.md`
 - relevant files under `templates/`
 

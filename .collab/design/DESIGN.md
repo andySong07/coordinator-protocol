@@ -1,6 +1,6 @@
 ---
 design_id: "DESIGN-001"
-status: "approved"
+status: "in_review"
 author: "codex"
 reviewer: "claude"
 ---
@@ -40,10 +40,12 @@ Codex 和 Claude 需要在一个项目内自主轮换 coordinator、developer、
 所有交付条件满足后只进入 `ready_for_user_confirmation`。Coordinator 必须向用户提供最终
 交付摘要并请求确认；只有用户明确同意后，才能提交 `CLOSE` commit 并结束 project。
 
-v0.3 定义两种显式 transport profile。`pr` 用 Draft/Ready/review commit_id 作为实时回合状态，
+v0.4 将 normative core 缩减为角色、生命周期、回合屏障、review、Git/identity、最小 lease、授权与
+完成门禁。它定义两种显式 transport profile：`pr` 用 Draft/Ready/review commit_id 作为实时回合状态，
 GitHub review thread 作为实时 comment 权威；`local` 用不可变 Git trigger/response 和 Markdown
 timeline。两种模式都复用 current session，主动唤醒下一方，轻量 poller 只恢复漏掉的通知。
-多 project dispatcher、lease、公平调度和 semaphore 作为后续独立实现任务，不再是核心协议依赖。
+最小 task lease 语义保留在核心；时间参数、多 project dispatcher、公平调度和 semaphore 作为后续
+独立实现任务，不再是核心协议依赖。
 
 PR 模式在集成时由 coordinator 从 GitHub API 生成只读 Markdown review snapshot，保留 review/thread
 ID 和 commit_id；它不构成第二套可变状态。开发者和 reviewer 使用不同 GitHub identity 时可启用
@@ -110,5 +112,5 @@ Project name 和 project ID 在本机 registry 中唯一。双方在创建前先
 ## Approval
 
 - Developer: `agreed`
-- Reviewer: `agreed` (PR #2 review `5633665041`, head `34a7c08`)
+- Reviewer: `pending v0.4 simplification review`; v0.3 was approved in PR #2 at `34a7c08`
 

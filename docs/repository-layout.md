@@ -1,34 +1,25 @@
-# Repository layout
-
-协作控制文件统一放在业务仓库的 `.collab/` 下，避免和交付物混杂。
+# Minimal repository layout
 
 ```text
-<project>/
-├── .git/
-├── .collab/
-│   ├── PROJECT.md
-│   ├── design/
-│   │   └── DESIGN.md
-│   ├── tasks/
-│   │   └── T-001.md
-│   ├── reviews/
-│   │   └── T-001.md
-│   ├── decisions/
-│   │   └── D-001.md
-│   ├── authorizations/
-│   │   └── A-001.md
-│   ├── subprojects/
-│   │   └── <subproject-id>/PROJECT.md
-└── <deliverables>
+<project>/.collab/
+├── BOOTSTRAP.md
+├── PROJECT.md
+├── design/
+│   └── DESIGN.md
+├── tasks/
+│   └── T-NNN.md
+├── reviews/                       # PR profile only
+│   └── T-NNN.snapshot.md
+├── authorizations/                # only when needed
+│   └── A-NNN.md
+└── decisions/                     # only when needed
+    └── D-NNN.md
 ```
 
-约束：
-
-- `PROJECT.md` 是角色、阶段、范围和完成条件的 source of truth。
-- 每个 task 有最小 transport manifest。`local` review 使用 append-only 文件；`pr` review 文件仅在
-  integration 时由 coordinator 从 GitHub API 生成，包含 review/thread ID 与 commit_id，禁止手改。
-- Decision record 只追加，不回写历史结论；新决策用 `supersedes` 指向旧记录。
-- 自动化不得把临时锁、PID、日志噪音或凭据提交到仓库。
-- Cursor、lease、semaphore、失败计数等 runtime 状态只保存在本机 state 目录，永不提交。
-- Subproject 的业务内容优先使用独立 worktree；根项目只保存映射和集成状态。
-
+- `BOOTSTRAP.md` is the cold-start trust record: run, protocol pin, roles, identities, permissions, worktree.
+- `PROJECT.md` alone answers project lifecycle and final-confirmation status.
+- `TASK.md` is a minimal PR binding in `pr`; it also contains the append-only review timeline in `local`.
+- `reviews/*.snapshot.md` is generated once at PR integration and never hand-edited.
+- Authorization and decision files are created only when the event exists.
+- Cursor, lease, PID, logs, credentials, and other runtime state stay outside Git and under the local state root.
+- Subprojects are an optional extension using the same records and barriers, not another core file hierarchy.

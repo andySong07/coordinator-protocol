@@ -30,7 +30,11 @@ depends_on: []
 
 ## Review rounds
 
-| Round | Review commit | Response commit | Result |
-|---|---|---|---|
-| 1 | — | — | pending |
+For `pr`, live findings exist only in the registered GitHub PR; this file remains a minimal manifest.
+
+For `local`, append every finding and transition here:
+
+| Finding | Severity | Status | Actor | Evidence / response |
+|---|---|---|---|---|
+| — | — | — | — | — |
 

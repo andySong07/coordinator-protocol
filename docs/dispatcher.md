@@ -1,6 +1,6 @@
 # Local dispatcher design (deferred, non-normative)
 
-This document is design input for a separately reviewed implementation task. Protocol v0.3 requires only the
+This document is design input for a separately reviewed implementation task. Protocol v0.4 requires only the
 light per-actor wake adapters in `docs/polling.md`; none of the registry fairness, lease, or semaphore behavior
 below is a core compliance dependency until an implementation is approved.
 

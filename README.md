@@ -1,13 +1,13 @@
 # Coordinator Protocol
 
-一套让 Codex 与 Claude 通过本地 Git 仓库和 Markdown 文件协作的协议。
+一套让 Codex 与 Claude 通过 Git 和 Markdown 协作的最小协议。
 
-核心选择是 **Git + Markdown**：
+v0.4 的核心原则是“每种 transport 只有一个实时状态源”：
 
-- Git 是同步层、并发控制层和审计日志；
-- Markdown 是任务、设计、review comment 和决策的可读载体；
-- commit 只声明“发生了什么”，完整上下文保存在仓库文件中；
-- 定时器只负责发现新 commit 并唤醒对应角色，不直接修改业务内容。
+- PR 模式由 GitHub Draft/Ready、review commit 和 thread 管理实时回合；
+- Local 模式由不可变 Git 事件和单个 `TASK.md` timeline 管理实时回合；
+- Markdown 保存 bootstrap、project、design、授权和最终可移植审计快照；
+- 唤醒器只通知，不拥有或修改状态。
 
 协议正文见 [docs/protocol.md](docs/protocol.md)，目录规范见
 [docs/repository-layout.md](docs/repository-layout.md)，轮询约定见
@@ -39,7 +39,6 @@
 - [templates/PROJECT.md](templates/PROJECT.md)
 - [templates/DESIGN.md](templates/DESIGN.md)
 - [templates/TASK.md](templates/TASK.md)
-- [templates/REVIEW.md](templates/REVIEW.md)
 - [templates/DECISION.md](templates/DECISION.md)
 - [templates/BOOTSTRAP.md](templates/BOOTSTRAP.md)
 - [templates/AUTHORIZATION.md](templates/AUTHORIZATION.md)

@@ -1,6 +1,6 @@
-# Polling and wake-up contract
+# Wake adapter implementation guide (non-normative)
 
-The normative rules are protocol §§5–7. Normal handoff actively resumes the next actor's current session;
+The normative invariants are in protocol §§4 and 7. This guide supplies tunable defaults. Normal handoff actively resumes the next actor's current session;
 actor-specific Codex and Claude pollers scan every 2–5 minutes only as recovery. They notify but never own or
 change turn state. A future dispatcher may optimize multi-project scheduling without changing this contract.
 
