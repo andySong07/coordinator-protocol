@@ -29,6 +29,10 @@ Codex launchd watchdog              Claude launchd watchdog
 Dispatcher 从本机 registry 发现项目。Registry 不提交到任何业务仓库，避免一个项目能够修改
 另一个项目的调度设置。
 
+默认 registry 为 `$XDG_CONFIG_HOME/coordinator/registry.yaml`，未设置 XDG 时使用
+`$HOME/.config/coordinator/registry.yaml`；runtime 对应 `$XDG_STATE_HOME/coordinator` 或
+`$HOME/.local/state/coordinator`。其他位置必须由本机配置显式指定。
+
 ```yaml
 version: 1
 limits:
@@ -79,13 +83,14 @@ Registry 和 bootstrap 对 Codex/Claude 对称。最先接到用户请求的一�
 锁键：
 
 ```text
-agent/<actor>/<job-id>
+semaphore/<actor>
 project/<project-id>/coordinator
-task/<project-id>/<subproject-id>/<task-id>/<round>
+task/<project-id>/<subproject-id>/<task-id>
 ```
 
-Task 锁上限固定为 1。Project 锁只保护集成与 project 状态，不阻止两个互不重叠的 task worktree
-并行。Agent 锁的总数受 `codex_max_jobs` 或 `claude_max_jobs` 限制。
+Task 锁不含 round 且上限固定为 1。Project 锁只保护集成与 project 状态，不阻止两个互不重叠
+的 task worktree 并行。Agent 维度是受 `codex_max_jobs` 或 `claude_max_jobs` 限制的计数信号量，
+不是每个 job 一个互不冲突的锁。
 
 ## 4. Fair scheduling
 
@@ -145,7 +150,7 @@ Dispatcher 只有在目标 project 的 main 包含该回应 commit 后才把事�
 - 一个 project 的 Git 错误、无效事件或 Agent 失败只更新该 project/job 的失败状态。
 - 达到三次连续失败后创建 coordinator attention event，并对该 job 退避；其他项目继续运行。
 - Dispatcher 崩溃后通过 lease、cursor 和 `Responds-To` 恢复，不重新执行已完成事件。
-- Project 进入 `done` 或 `cancelled` 后停止扫描，但保留审计状态。
+- Project 进入 `done`，或具有用户明确取消记录的 `cancelled` 后停止扫描，但保留审计状态。
 - Registry、runtime state 和业务仓库分别存储；dispatcher 不根据仓库内容执行任意 shell 命令。
 
 ## 8. GitHub Actions adapter

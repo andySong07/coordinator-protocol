@@ -1,14 +1,22 @@
 REVIEW(T-001): request changes to validation behavior
 
-Role: reviewer
-Actor: claude
-Task: T-001
-State: changes_requested
 Summary:
 - Added two blocking comments and one non-blocking suggestion.
 - Validation currently permits an input excluded by the acceptance criteria.
 Evidence:
 - .collab/reviews/T-001.md
 - failing case documented in R-1-01
-Next: codex/developer respond to review T-001
+
+Actor: claude
+Role: reviewer
+Project: example-project
+Subproject: root
+Task: root-T-001
+Entity: task
+State: changes_requested
+Action: respond
+Target-Commit: SELF
+Responds-To: 0123456789abcdef0123456789abcdef01234567
+Next-Actor: codex
+Next-Role: developer
 

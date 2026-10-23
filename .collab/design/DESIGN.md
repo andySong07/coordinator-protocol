@@ -1,6 +1,6 @@
 ---
 design_id: "DESIGN-001"
-status: "changes_requested"
+status: "in_review"
 author: "codex"
 reviewer: "claude"
 ---

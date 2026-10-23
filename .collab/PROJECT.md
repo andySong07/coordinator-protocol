@@ -2,6 +2,7 @@
 protocol_version: "0.1"
 project_id: "coordinator-protocol"
 title: "Codex–Claude Coordinator Protocol"
+unique_name: "coordinator-protocol"
 phase: "design"
 status: "active"
 complexity: "standard"
@@ -9,6 +10,10 @@ coordinator: "codex"
 developer: "codex"
 reviewer: "claude"
 created_at: "2026-10-23T10:00:00-07:00"
+coordination_enabled: true
+protocol_source: "/Users/yuansong/Documents/coordinator"
+protocol_commit: "7c73888d158ebd461c491ba3deb64467de556b3b"
+current_run_id: "run-001"
 ---
 
 # Project: Codex–Claude Coordinator Protocol
@@ -69,6 +74,14 @@ created_at: "2026-10-23T10:00:00-07:00"
 ## Authorization holds
 
 None.
+
+## Peer environment
+
+- bootstrap: `.collab/BOOTSTRAP.md`
+- codex session: current Codex project session
+- claude session: current Claude review session
+- shared repository: `/Users/yuansong/Documents/coordinator`
+- writable checkout policy: `separate-worktree`
 
 ## Final confirmation
 

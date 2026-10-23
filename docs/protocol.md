@@ -1,359 +1,180 @@
-# Codex–Claude 协作协议 v0.1
+# Codex–Claude Coordinator Protocol v0.2
 
-## 1. 目标与原则
+## 1. Scope and authority
 
-本协议让 Codex 和 Claude 在没有用户逐步介入的情况下，完成“设计 → 开发 → review →
-修订 → 一致 → 交付”的闭环。
+This is a shared contract: Codex and Claude have equal obligations. A user decides per project whether
+coordination is enabled and which actor is coordinator. If disabled, none of this protocol is started.
 
-规则优先级如下：
+Priority: user instructions; safety/authorization; pinned protocol commit; project record; accepted
+decisions. Ordinary technical disagreement is not sent to the user.
 
-1. 用户的明确要求；
-2. 安全、权限和有损操作约束；
-3. 项目 `PROJECT.md`；
-4. 已接受的 decision record；
-5. 本协议；
-6. 各 Agent 自己的默认习惯。
+Roles:
 
-Agent 不得把普通技术分歧升级给用户。分歧必须先通过证据、实验、最小实现或 reviewer
-复审解决。只有第 10 节所列事项需要用户授权。
+- coordinator creates the run, assigns roles, integrates, and asks for final confirmation;
+- developer designs/implements, verifies, and responds to every review comment;
+- reviewer independently reviews; only its author may resolve or withdraw a comment.
 
-## 2. 角色
+Developer and reviewer for a task must differ. A coordinator who is also a disputing party cannot decide
+that dispute. A mutually defined objective test decides when possible; otherwise an open blocking review
+stands. The coordinator cannot close it by decision record.
 
-### Coordinator
+## 2. Project, run, and identity
 
-- 由用户在创建 project 时指定为 Codex 或 Claude；
-- 评估复杂度、建立项目目录和 Git 仓库、指定其余角色；
-- 先推动设计，设计未达到 `approved` 前不得进入实现阶段；
-- 把复杂项目拆成边界清晰的 subproject，并管理依赖和集成顺序；
-- 不代替 developer 自审，也不代替 reviewer 批准；
-- 当循环停滞时选择实验、缩小范围或作出项目内决策；
-- 验证完成条件，将项目置为 `ready_for_user_confirmation`，向用户发起最终确认；只有用户明确
-  确认后才关闭项目。
+A project is a long-lived repository/environment. A collaboration run is one user request. Sessions belong
+to the current run and are resumed across rounds; they are archived after the user confirms completion.
+The next request creates new sessions. v0.2 permits one active run per project; parallel work requires
+separate subprojects/tasks inside that run.
 
-### Developer
+The local registry is authoritative. Normalized project name and project ID must each be unique. An exact
+name/ID/path/Git-root match is reused; missing entries are created; partial, multiple, or contradictory
+matches stop without mutation. Product-side project lookup is optional enrichment.
 
-- 产出可以是代码、设计、研究、文档或其他约定成果；
-- 在任务文件中记录假设、验证方法和完成证据；
-- 逐条处理 review comment：接受则修改并给证据，不接受则写出反驳依据；
-- 不得自行把 blocking comment 标为 `resolved`。
+Default project root is configurable as `projects_root`; this user may configure
+`/Users/yuansong/Documents/projects`. It is never a portable protocol constant.
 
-### Reviewer
+## 3. Bootstrap
 
-- 独立检查设计和交付物；
-- comment 必须指向具体文件、段落、需求或验证证据；
-- 对 developer 的回应逐条复审；
-- 只有 reviewer 可以把自己提出的 comment 标为 `resolved` 或 `withdrawn`；
-- 不以风格偏好阻塞交付，blocking comment 必须对应正确性、安全性、需求、可维护性或可验证性风险。
-
-同一个 project 中 developer 与 reviewer 必须由不同 Agent 担任。Coordinator 可以兼任其中
-一个角色，但优先保持三职分离。对于多 subproject，Codex 和 Claude 必须交叉担任 developer
-和 reviewer；不得让同一个 Agent 同时开发和 review 同一 subproject。
-
-Coordinator 不是所有 project 的默认功能。用户每次创建 project 时必须明确选择是否启用：
+Before acting, coordinator and peer read protocol files from the pinned snapshot, not the working tree:
 
 ```text
-coordination.enabled: true | false
-coordination.coordinator: codex | claude | null
+git -C <protocol_source> cat-file -e <protocol_commit>^{commit}
+git -C <protocol_source> show <protocol_commit>:docs/protocol.md
 ```
 
-`enabled: false` 时，该 project 不启动本协议、dispatcher 或强制 review loop。`enabled: true`
-时，coordinator 必须由用户指定；协议不得根据项目从哪个产品发起而自行推断 coordinator。
+The check means “commit exists and required files are readable,” not “commit equals HEAD.” Coordinator may
+upgrade `protocol_commit` only between rounds with a migration commit; the active round retains its pin.
 
-## 3. 启动协议
+`.collab/BOOTSTRAP.md` carries project/run IDs, dedicated directory, repository, main ref, peer worktree,
+roles, pinned protocol, trigger/target commits, enforced permissions, and expected response. Peer reuses an
+exact existing product project or creates one, then uses a separate writable worktree. It never clones a
+second divergent business repository.
 
-Coordinator 按以下顺序启动项目：
+## 4. Lifecycles
 
-1. 读取本机制的 `README.md`、`docs/protocol.md`、`docs/dispatcher.md`、`docs/polling.md` 和相关
-   templates，并记录 canonical source path 与当前 protocol commit。在读取完成前不得评估、分配
-   角色或修改目标 project。来源不可访问或 commit 不匹配时停止初始化，不得凭记忆猜测规则。
-2. 按唯一 project name 查询本机 registry 和目标产品已有 project。名称比较使用去除首尾空白后的
-   Unicode case-fold 结果；显示名称和 `project_id` 均必须在 registry 中唯一。
-3. 如果 project 已存在，验证其 project ID、dedicated dir 和 Git root 一致后直接复用，不创建
-   新目录或重复 app project。如果不存在，检查是否已有明确的 dedicated project dir；若没有，
-   在 `/Users/yuansong/Documents/projects/<project-id>` 创建目录。`project-id` 使用小写短横线格式。
-   同名不同路径、同路径不同 project ID 或多个匹配项都视为冲突，停止初始化并报告，不得选择、
-   合并、覆盖或重命名其中任意一个。
-4. 若目录不是 Git repo，则初始化本地 Git 仓库。
-5. 创建 `.collab/PROJECT.md` 与 `.collab/design/DESIGN.md`。
-6. 评估复杂度并写入 `PROJECT.md`：
-   - `simple`：单一交付物、边界清楚、低集成风险；
-   - `standard`：多个任务或存在明显取舍，但可由一个 project 管理；
-   - `complex`：多个可独立开发模块、并行收益明确或集成风险高。
-7. 指定 developer 和 reviewer，并记录到 `PROJECT.md`。
-8. 为非 coordinator 一方生成 bootstrap handoff，使其创建对应的 app project/current run，绑定
-   同一个 dedicated repo 或分配给它的 worktree。
-9. 复杂项目按模块创建 `.collab/subprojects/<id>/PROJECT.md`，声明输入、输出、依赖、
-   接口和 owner。只有真正可独立验收的模块才拆分。
-10. 提交 `INIT` commit。
+Project `status`: `active | waiting_authorization | ready_for_user_confirmation | done | cancelled`.
+Project `phase`: `design | implementation | integration | delivery | closed`.
 
-### 对称启动与 peer bootstrap
+- `active/design -> active/implementation`: coordinator, design approved.
+- `active/implementation -> active/integration`: coordinator, required tasks approved.
+- `active/integration -> ready_for_user_confirmation/delivery`: coordinator, integration passed.
+- any nonterminal -> `waiting_authorization`: coordinator, authorization record pending.
+- waiting -> previous state: coordinator, authorization resolved or avoided.
+- ready -> active design/implementation: coordinator, user requests changes.
+- ready -> `done/closed`: coordinator, valid confirmation; same CLOSE commit.
+- any nonterminal -> `cancelled/closed`: coordinator, only with explicit recorded user cancellation.
 
-本协议对 Codex 和 Claude 完全对称：project 可以先在任一产品中发起，任一方都可由用户指定为
-coordinator。另一方不是临时无上下文 CLI；它必须创建与该 collaboration run 对应的 project/
-session 环境，并先读取同一固定版本的协议。
+Only `done` or valid user-requested `cancelled` stops watchdogs. `Final confirmation.status` maps exactly:
+`not_ready` for active/waiting, `awaiting_user` for ready, `confirmed` for done.
 
-Coordinator 通过 `.collab/BOOTSTRAP.md` 和 `INIT` commit 向 peer 提供：
+Design states: `draft -> in_review`; reviewer chooses `approved` or `changes_requested`; developer returns
+changes_requested to in_review; reviewer may reopen approved only with new evidence.
 
-- project ID、title、objective 与 coordination 是否启用；
-- coordinator、peer 的 actor 与初始角色；
-- dedicated project dir 的绝对路径；
-- Git repo、共享 main、peer worktree/branch（如已创建）；
-- protocol source path 与 protocol commit；
-- collaboration run ID、当前 task、固定 target/trigger commit；
-- 允许读写范围、验证命令、授权状态；
-- peer 应创建还是 resume session，以及完成后的 `Responds-To` 要求。
+Task states: `draft -> assigned -> in_progress -> review_requested`; reviewer chooses `approved` or
+`changes_requested`; developer returns changes_requested to in_progress then review_requested. Any
+nonterminal may enter `blocked` with a recorded dependency and return to its prior state, or `cancelled`
+when the project/user cancellation record covers it.
 
-Peer 必须先按唯一名称查询自己的已有 app project。若存在且路径、Git root、project ID、
-protocol commit 与 bootstrap 一致，则直接复用；只有不存在时才创建。验证角色不冲突后才建立
-current session。双方共享 Git 历史和 dedicated repo，但不得共享同一个可写 checkout。“创建
-对应 project”是按需创建本产品中的环境/registry 记录，不是复制一份互相分叉的业务仓库。
+## 5. Turn barrier and review
 
-如果 coordinator 无法直接调用另一产品的 project API，dispatcher 使用 bootstrap 信息启动该
-产品 CLI，并把生成的 session ID 写入本机 run registry。不得要求用户手工转述日常交接信息。
-
-## 4. 设计门禁
-
-所有项目都必须先有设计。设计至少包含：目标、非目标、约束、方案、备选方案、接口或交付
-格式、风险、验证计划、回滚策略。
-
-设计采用与实现相同的 developer/reviewer 循环。Reviewer 写下 `approved` 后，coordinator
-才把 project phase 从 `design` 改为 `implementation`。紧急修复也必须有轻量设计，允许和
-实现放在同一轮，但不能省略。
-
-### 严格回合屏障
-
-同一 task 同一时刻只能有一个 active actor。Developer 完成本轮全部修改后，以一个明确的
-handoff commit 请求 review，并把该 commit SHA 记录为 reviewer 的固定基线。交接后 developer
-与 coordinator 不得再修改该 task 的交付物、task 或 review 文件，直到 reviewer 提交本轮结论。
-
-Reviewer 只能审查 handoff 中声明的固定 SHA，并以一个 review commit 结束本轮。Review 期间
-收到的新需求进入下一 developer turn，不得插入当前审查范围。任何时刻不得存在两个 active
-review round。只有安全紧急情况可以中断；中断时 coordinator 必须先显式取消当前 review，建立
-新基线和新 round，不能让 reviewer 继续审查失效 SHA。
-
-## 5. 任务状态机
+One task has one mutex independent of round:
 
 ```text
-draft -> assigned -> in_progress -> review_requested
-      -> changes_requested -> in_progress -> review_requested
-      -> approved -> integrated -> ready_for_user_confirmation
-      -> user_confirmed -> done
+task/<project>/<subproject>/<task>
 ```
 
-允许的写入者：
+Developer makes one handoff to a fixed SHA, then freezes that task. Reviewer increments `current_round` in
+its review commit and makes one review commit. Only after that commit and lock release may developer act.
+New requirements wait for the next developer turn. Cancellation uses the same task mutex and an explicit
+`CANCEL-REVIEW` event.
 
-| 状态 | 写入者 | 必要条件 |
-|---|---|---|
-| `draft` | coordinator | 已定义目标和验收标准 |
-| `assigned` | coordinator | 已指定 developer/reviewer |
-| `in_progress` | developer | 已确认任务边界 |
-| `review_requested` | developer | 有交付物、验证证据和 commit |
-| `changes_requested` | reviewer | 至少一个 open blocking comment |
-| `approved` | reviewer | 无 open blocking comment |
-| `integrated` | coordinator | 依赖和集成验证通过 |
-| `ready_for_user_confirmation` | coordinator | 项目完成条件满足，已准备整体交付摘要 |
-| `user_confirmed` | coordinator | 用户已明确接受项目整体交付 |
-| `done` | coordinator | 已记录用户确认并完成关闭动作 |
+Comment IDs never change. Status transitions:
 
-状态只能前进到表中允许的相邻状态；重新打开时由 reviewer 将 `approved` 改为
-`changes_requested` 并创建新 comment。
+- reviewer creates `open`;
+- developer: `open -> accepted|disputed`, `accepted -> addressed`, `disputed -> accepted`;
+- reviewer: `addressed -> resolved|open`, `disputed -> withdrawn|open`, `open -> withdrawn`;
+- question: reviewer opens, developer marks answered, reviewer resolves/reopens.
 
-## 6. Review comment 协议
+Every change appends a timeline entry with round, actor, time, action, text, and evidence. Nothing is
+overwritten. Two rounds “without new evidence” means no newly cited test result, requirement, specification,
+or artifact fact. An interested coordinator still cannot close the comment.
 
-每条 comment 使用稳定 ID：`R-<round>-<sequence>`，例如 `R-2-03`。禁止删除历史
-comment；状态变化通过编辑该 comment 的字段并保留时间线完成。
+## 6. Git and event envelope
 
-字段：
+`main` is the only observed ref. Actors work in `collab/<subproject>/<task>/<actor>` worktrees. Handoff is
+fast-forward only. If main moved, actor rebases/cherry-picks its own recoverable commit in its worktree,
+revalidates, and retries; it never forces, discards unknown changes, or auto-resolves semantic conflicts.
 
-- `severity`: `blocking | non_blocking | question`
-- `status`: `open | accepted | disputed | addressed | resolved | withdrawn`
-- `location`: 文件路径、标题或行号；非代码成果可写交付物章节
-- `claim`: reviewer 认为存在的问题
-- `required_outcome`: 可验证的期望结果，不强制指定实现手段
-- `evidence`: reviewer 的依据
-- `developer_response`: 接受、反驳或请求澄清的说明
-- `resolution`: reviewer 的复审结论
+Commit identity is declared exactly in project/registry for `codex`, `claude`, and `user`; validation is exact
+name/email equality. Automation never changes global config. “Published” means reachable from observed main;
+reachable commits are never amended.
 
-流转规则：
+Human summary/evidence precedes a final `git interpret-trailers` block. Required trailers:
 
 ```text
-open -> accepted -> addressed -> resolved
-open -> disputed -> resolved
-open -> disputed -> open          # reviewer 提供新证据或收窄问题
-open -> withdrawn                 # reviewer 接受反驳或认为问题不再适用
-```
-
-Developer 对 blocking comment 不得只回复“不同意”。必须给出需求、测试、实验、规范、
-代码路径或明确取舍作为依据。Reviewer 不接受反驳时也必须补充新理由，不能原样重复 claim。
-
-双方连续两轮没有引入新证据且仍不一致时，coordinator 必须选择以下一种处理：
-
-1. 定义一个可判定的实验或验收测试；
-2. 选风险更低、可回滚的方案；
-3. 记录 decision record，明确取舍和后果。
-
-这不是用户升级条件。
-
-## 7. Git 交互规则
-
-### Agent Git 身份
-
-每个 Agent 在第一次提交前必须检查 Git identity，不得依赖操作系统根据用户名和主机名自动
-推断的姓名或邮箱。Commit identity 必须能让审计者区分 Codex、Claude 和用户本人，并与
-commit body 的 `Actor` 字段一致。
-
-推荐身份：
-
-| Actor | `user.name` | `user.email` 示例 |
-|---|---|---|
-| Codex | `Codex Agent` | `codex-agent@localhost` |
-| Claude | `Claude Agent` | `claude-agent@localhost` |
-
-自动化不得修改用户的 global Git config。身份只能通过以下方式之一设置：
-
-1. 独立 repository 使用 repository-local config；
-2. 共享 repository 的独立 worktree 使用 worktree-local config；
-3. 单次提交通过命令级 `-c user.name=... -c user.email=...` 设置。
-
-提交前必须验证：
-
-```text
-git config user.name
-git config user.email
-```
-
-如果身份缺失、仍是系统自动推断值，或与 `Actor` 不一致，Agent 必须先修正本次提交的本地
-身份再继续。不得为修正身份而自动 amend 已被另一角色消费的 commit；应追加说明或修复
-commit，除非该 commit 尚未发布且 coordinator 明确判定无人消费。
-
-### 单写者原则
-
-共享仓库可以被多个 Agent 读取，但同一工作目录在任一时刻只有一个写者。并行 subproject
-使用独立 branch + worktree，避免两个 Agent 同时写一个 checkout。
-
-Developer 可以在自己的 branch 上产生内部 checkpoint commit，但只有一次完整 handoff 可以
-更新共享 `main`。Reviewer 工作期间 `main` 对同一 task 冻结。不同 project 拥有独立 Git repo，
-不同 project 的 `main` 可以并行推进。
-
-推荐分支：
-
-- `main`：coordinator 管理的集成分支；
-- `collab/<subproject>/<role-or-task>`：开发分支；
-- review 默认通过 commit 和 Markdown 进行，不要求 reviewer 修改开发分支。
-
-### 一次交接一个 commit
-
-每个可被另一角色消费的动作必须形成独立 commit。Commit subject：
-
-```text
-<TYPE>(<scope>): <imperative summary>
-```
-
-`TYPE` 为 `INIT | DESIGN | ASSIGN | WORK | REVIEW | RESPOND | REVISE | DECIDE | INTEGRATE | CLOSE`。
-
-Commit body 必须包含：
-
-```text
-Role: coordinator|developer|reviewer
 Actor: codex|claude
-Task: <task-id>
-State: <new-state>
-Summary:
-- <what changed>
-- <why>
-Evidence:
-- <tests, checks, or document paths>
-Next: <expected role and action>
+Role: coordinator|developer|reviewer
+Project: <id>
+Subproject: <id|root>
+Task: <globally-unique-id|PROJECT>
+Entity: project|design|task|review|authorization
+State: <entity state|unchanged>
+Action: design|review|respond|rereview|integrate|request_confirmation|close|none
+Target-Commit: <sha|SELF|none>
+Responds-To: <current trigger sha|none>
+Next-Actor: codex|claude|user|none
+Next-Role: coordinator|developer|reviewer|user|none
 ```
 
-`Summary` 是用户所要求的每一步摘要；不依赖 subject 单独承载。不得把秘密、token 或大量
-生成内容写进 commit message。
+`SELF` means the commit carrying the envelope and avoids an impossible self-referential SHA. Fields are
+ordered, single-valued, and mandatory. Project events use `Task: PROJECT`. `State` names the
+`Entity`. One event has one recipient; parallel recipients get separate tasks/events. Dispatcher rejects and
+alerts on duplicate response, non-current trigger, missing field, or envelope/file-state mismatch. Multiple
+triggers require separate response commits; v0.2 does not batch them.
 
-### 消费 commit
+## 7. Dispatcher, permissions, and recovery
 
-Agent 只处理满足以下条件的 commit：
+Normal path is `dispatcher kick-next`; Codex and Claude actor-specific launchd watchdogs recover missed
+events. Each scans only main in topological reverse order from its local cursor. It wakes only on exact
+Next-Actor/Role and never because a file changed. Completion is a descendant response commit whose
+`Responds-To` equals the trigger.
 
-- commit 晚于自己记录的 cursor；
-- `Next` 指向自己的角色，或修改了自己负责的任务；
-- commit 属于当前 project/subproject；
-- commit 已存在于稳定可读取的本地 ref。
+Registry defaults to `$XDG_CONFIG_HOME/coordinator/registry.yaml` or
+`$HOME/.config/coordinator/registry.yaml`. Runtime defaults to `$XDG_STATE_HOME/coordinator` or
+`$HOME/.local/state/coordinator`. Registry overrides are explicit. Cursor/lease/failure keys include
+project/subproject/task/actor/role. Actor concurrency is a counting semaphore, not a per-job lock.
 
-Agent 完成动作后更新 `.collab/runtime/cursors/<actor>-<role>.txt`。Runtime cursor 默认可提交，
-以便两个独立进程共享进度；它只能包含最后处理的 commit SHA，不包含锁或 PID。
+Task lease contains PID, base SHA, start and expiry. Default job timeout is 30 minutes, lease 35 minutes,
+renewed every 5 minutes. A lock is stale only when PID is absent and lease expired. Failure count is local,
+resets on a valid response, and backs off after three failures without blocking other projects.
 
-## 8. 一致、用户确认与完成
+Unattended launch is fail-closed. Codex uses workspace-write sandbox with no automatic escalation. Claude
+uses an explicit tool/path allowlist and noninteractive denial. Both prohibit bypass/dangerous modes. Network
+is disabled unless bootstrap explicitly grants it. Interactive permission/auth prompts cause immediate failure,
+an authorization hold event, and task blocking—never waiting forever or auto-approval. Bootstrap writable and
+forbidden paths must be enforced by the launcher, not merely included in a prompt.
 
-“达成一致”必须是显式状态，而不是没有新消息：
+Jitter reduces simultaneous fast-forward/semaphore contention; it is not a lock.
 
-- 所有 blocking comment 均为 `resolved` 或 `withdrawn`；
-- developer 在任务中声明交付物和验证结果完整；
-- reviewer 将任务标为 `approved`；
-- developer 没有未回答的 `question`；
-- coordinator 完成集成验证。
+## 8. Authorization and final confirmation
 
-Non-blocking comment 可以带入 backlog，但必须由 coordinator 明确接受为后续事项。
+Any action that can lose uncommitted data or commits without another ref, overwrite unknown changes, write
+outside allowed roots, publish externally, send messages, spend money, or expand permission requires a
+one-use authorization. Examples include destructive reset/clean/restore, deleting unmerged branches or
+worktrees, stash drop, and immediate prune. Ordinary deletion is allowed only for files created by the agent
+in a reachable commit and recoverable through Git.
 
-技术一致和集成验证通过后，项目仍未结束。Coordinator 必须：
+Authorization lives at `.collab/authorizations/A-NNN.md`: exact action/command, objects, impact, recovery,
+request time, status, user quote/reference, channel, decision time, expiry. Status is
+`pending|approved|denied|expired|consumed`; approval is exact-scope, single-use.
 
-1. 将项目状态设为 `ready_for_user_confirmation`；
-2. 向用户提供最终交付摘要，包括完成内容、验证结果、已知限制、遗留 backlog 和有无未提交改动；
-3. 明确询问用户是否确认结束该 project；
-4. 等待用户明确确认，不把沉默、超时或对某个中间成果的认可视作最终确认；
-5. 收到确认后记录确认时间和对应交付 commit，提交 `CLOSE` commit，再把状态设为 `done`。
+After integration, coordinator commits a delivery summary and asks the user explicitly. Confirmation record
+contains user quote/reference, channel, time, summary path, and confirmed delivery commit. Silence is not
+confirmation. Any later deliverable/design/task/review/decision change invalidates it. CLOSE atomically writes
+the complete record plus `done/closed`. Every actor validates it before stopping or archiving sessions.
 
-如果用户要求修改，coordinator 将项目恢复到相应的 `design`、`implementation` 或
-`changes_requested` 阶段，重新进入 developer/reviewer 闭环；修改完成后必须再次发起最终确认。
+## 9. Completion
 
-## 9. Coordinator 的自主决策边界
-
-Coordinator 可以自主：选择技术方案、拆分任务、调整顺序、定义实验、接受可回滚取舍、
-把非阻塞项移入 backlog，以及在项目范围内增删生成文件。
-
-Coordinator 不应仅因不确定就询问用户；应先收集证据并选择最可逆的合理方案。
-
-## 10. 必须向用户请求授权的事项
-
-以下动作需要暂停并请求用户：
-
-- 删除或不可恢复地覆盖用户数据；
-- 强制改写共享 Git 历史、删除远端分支或覆盖未知改动；
-- 发布到生产、公开发布、发送外部消息、付款或产生费用；
-- 获取新的账户权限、凭据或扩大已授权范围；
-- 需求之间存在无法通过证据消除的冲突，且任何选择都会造成不可逆业务后果；
-- 平台本身要求交互式授权。
-
-此外，所有 project 在结束前都必须请求用户进行最终确认。最终确认是正常交付门禁，不属于
-有损操作授权；在确认前不得停止项目 timer、归档项目或把状态写为 `done`。
-
-请求必须写明：准确动作、影响对象、为什么不可逆、恢复方式（如有）。等待授权期间可以继续
-不依赖该动作的工作。
-
-## 11. 异常与恢复
-
-- **脏工作树**：停止覆盖，记录发现，隔离自己的工作；未知改动归用户所有。
-- **并发冲突**：coordinator 决定集成顺序；developer 负责自己分支的冲突修复，reviewer
-  复查语义变化。
-- **Agent 超时**：轮询器不重做动作，只再次唤醒；以 task state 和 commit SHA 保证幂等。
-- **坏 commit**：追加修复 commit，禁止静默 amend 已被另一角色消费的 commit。
-- **协议违规**：coordinator 创建 `DECIDE` commit 记录纠正方式，然后从最后有效状态继续。
-
-## 12. 多 project dispatcher
-
-正常路径由当前 Agent 在成功提交后调用 dispatcher 即时启动下一方。恢复路径由 Codex 和
-Claude 各自的 actor-specific `launchd` watchdog 周期性启动同一个短生命周期 dispatcher。
-Dispatcher 从本机 project registry 发现项目；每个 project 保持独立 Git repo、cursor、
-worktree、锁、失败计数和最终确认。
-
-并发边界：
-
-- 不同 project 默认可以并行；
-- 同一 project 中，只有交付物和控制文件不重叠的 task 才可用独立 worktree 并行；
-- 同一 task/round 的 developer 与 reviewer 永远串行；
-- coordinator 的集成、项目状态和最终确认一次只允许一个写者；
-- 全局、每个 Agent、每个 project 和每个 task 都有独立并发上限。
-
-默认限制为 `global=3`、`codex=2`、`claude=2`、`per-project=2`、`per-task=1`。如果某个 CLI
-不支持并发 session，相应 Agent 上限降为 1。调度采用 aging round-robin，先照顾等待最久的
-project，同时避免单个 project 占满全部槽位。一个 project 的失败只对该 project/job 退避，
-不得阻塞其他 project。完整设计见 `docs/dispatcher.md`。
-
+Completion requires approved design/tasks, no open blocking/question, verified integration, valid user
+confirmation, and no unknown changes. Nonblocking comments are resolved/withdrawn or explicitly backlogged.
+Publishing this protocol to GitHub occurs only after reviewer approval; the user has pre-authorized creation
+and first push of public repository `coordinator-protocol`.

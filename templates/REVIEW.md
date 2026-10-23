@@ -1,9 +1,8 @@
 ---
 task_id: "T-001"
-round: 1
+current_round: 1
 reviewer: "codex|claude"
-reviewed_commit: "<sha>"
-result: "changes_requested|approved"
+round_history: []
 ---
 
 # Review: T-001 / round 1
@@ -20,8 +19,13 @@ result: "changes_requested|approved"
 - claim: <specific problem>
 - required_outcome: <observable result>
 - evidence: <reason, test, requirement, or reference>
-- developer_response: <pending>
-- resolution: <pending>
+- timeline:
+  - round: 1
+    actor: reviewer
+    at: "<ISO-8601>"
+    action: opened
+    text: <review claim>
+    evidence: <reference>
 
 ## Reviewer decision
 
