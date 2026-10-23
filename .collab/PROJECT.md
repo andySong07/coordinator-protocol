@@ -3,8 +3,8 @@ protocol_version: "0.3"
 project_id: "coordinator-protocol"
 title: "Codex–Claude Coordinator Protocol"
 unique_name: "coordinator-protocol"
-phase: "integration"
-status: "active"
+phase: "delivery"
+status: "ready_for_user_confirmation"
 complexity: "standard"
 coordinator: "codex"
 developer: "codex"
@@ -92,8 +92,9 @@ None.
 
 ## Final confirmation
 
-- status: `not_ready`
-- requested_at: null
+- status: `awaiting_user`
+- requested_at: "2026-10-23T19:51:11Z"
+- requested_delivery_commit: "ef3894756450478a7802257fb3fc78e1a2c707b2"
 - confirmed_at: null
 - confirmed_delivery_commit: null
 - user_quote_or_reference: null
