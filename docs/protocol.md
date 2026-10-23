@@ -124,7 +124,7 @@ A one-use user grant is required before losing uncommitted/unique data, overwrit
 outside allowed roots, publishing externally, messaging third parties, spending money, or expanding permission.
 Record exact action, objects, impact, recovery, user quote/reference, channel/time, expiry, and consumption in
 `.collab/authorizations/A-NNN.md`. A consumed v0.4 authorization names exactly one reachable `action_commit`
-whose `Action` trailer matches the grant.
+whose `Action` trailer matches the grant; `SELF` means the commit containing that record.
 
 An actor may recover only its own abandoned temporary output after the lease proves no live owner and any
 unique diff is preserved on a recovery ref. Unknown ownership, unrecoverable data, or ref/worktree deletion
