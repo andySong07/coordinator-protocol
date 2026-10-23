@@ -1,0 +1,5 @@
+# Runtime locks and logs are local; cursors are intentionally tracked.
+.collab/runtime/locks/
+.collab/runtime/logs/
+*.swp
+.DS_Store
