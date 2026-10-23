@@ -2,7 +2,8 @@
 
 ## 职责拆分
 
-Codex 和 Claude 各自运行一个独立 timer。Timer 只做四件事：
+正常路径由提交方调用 dispatcher 即时启动下一 actor。Codex 和 Claude 仍各自运行一个独立
+watchdog timer，恢复没有被即时交接成功的事件。Timer 只做四件事：
 
 1. 读取该角色的 cursor；
 2. 查询 cursor 之后的新 commit；
@@ -67,9 +68,9 @@ Git”范围，必须由 coordinator 明确配置。
 
 ## 多 project 调度
 
-本机只运行一个通用 launchd job，每次启动短生命周期 dispatcher。Dispatcher 读取本机 project
-registry，分别扫描每个 project 的 Git main 和独立 cursor。不同 project 可以并行；同一 project
-只有文件范围不重叠、使用独立 worktree 的 task 可以并行；同一 task/round 固定串行。
+本机运行两个 actor-specific launchd watchdog，共享同一个 dispatcher 程序。Dispatcher 读取
+本机 project registry，分别扫描每个 project 的 Git main 和独立 cursor。不同 project 可以并行；
+同一 project 只有文件范围不重叠、使用独立 worktree 的 task 可以并行；同一 task/round 固定串行。
 
 全局、每 actor、每 project 和每 task 的并发限制、锁键、公平队列、隔离与失败传播规则见
 `docs/dispatcher.md`。

@@ -40,9 +40,18 @@ Codex 和 Claude 需要在一个项目内自主轮换 coordinator、developer、
 所有交付条件满足后只进入 `ready_for_user_confirmation`。Coordinator 必须向用户提供最终
 交付摘要并请求确认；只有用户明确同意后，才能提交 `CLOSE` commit 并结束 project。
 
-本机采用一个 launchd job 周期性启动短生命周期 dispatcher。Dispatcher 从本机 registry 扫描
-多个 project，使用全局、actor、project 和 task 四级并发约束。不同 project 可并行；同一
-project 的独立 task 可通过 worktree 并行；同一 task 的 developer/reviewer 严格串行。
+正常路径由提交方调用 dispatcher 即时启动下一 actor；Codex 和 Claude 各自的 launchd watchdog
+负责恢复遗漏交接。两者共享短生命周期 dispatcher，从本机 registry 扫描多个 project，使用
+全局、actor、project 和 task 四级并发约束。不同 project 可并行；同一 project 的独立 task 可
+通过 worktree 并行；同一 task 的 developer/reviewer 严格串行。
+
+Coordinator 是用户在每次创建 project 时显式启用并指定的可选能力。Project 可从 Codex 或
+Claude 任一端发起；coordinator 必须先读取固定 commit 的本机制，再通过 BOOTSTRAP handoff
+让非 coordinator 一方创建自己的 app project/current session，并绑定同一 dedicated repo 的
+独立 worktree。
+
+Project name 和 project ID 在本机 registry 中唯一。双方在创建前先查询；已有且 identity 完全
+匹配则复用，只有不存在才创建。同名不同路径、同路径不同 ID 或多个匹配项必须停止，不得覆盖。
 
 ## Interfaces / output format
 

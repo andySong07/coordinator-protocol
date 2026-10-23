@@ -2,12 +2,16 @@
 
 ## 1. Process model
 
-macOS 只安装一个通用 `launchd` job。它按固定周期启动一次 dispatcher；dispatcher 是短进程，
-完成扫描和调度后退出。Codex 与 Claude CLI 只在出现可执行交接事件时按需启动。
+正常交接采用主动模式：Agent 成功提交后调用 `dispatcher kick-next`，由 dispatcher 校验并立即
+启动下一方。恢复路径安装两个 actor-specific `launchd` watchdog，分别以 `--actor codex` 和
+`--actor claude` 扫描遗漏事件。Dispatcher 是短进程，完成扫描或调度后退出；Codex 与 Claude
+CLI 只在出现可执行交接事件时按需启动。
 
 ```text
-launchd
-  -> dispatcher --once
+Agent commit -> dispatcher kick-next
+
+Codex launchd watchdog              Claude launchd watchdog
+  -> dispatcher scan --actor codex    -> dispatcher scan --actor claude
        -> scan project registry
        -> select runnable events
        -> acquire scoped leases
@@ -17,8 +21,8 @@ launchd
        -> exit
 ```
 
-Git hook 可以请求一次即时扫描以降低延迟，但不是可靠性基础；即使 hook 丢失，下一次 launchd
-扫描仍会发现事件。
+即时启动失败不会消费事件；相应 actor 的下一次 watchdog 扫描会恢复。Hook 可作为额外通知，但
+不是必需路径。两个 watchdog 使用各自 cursor/失败状态，共享原子并发 semaphore 和 task lease。
 
 ## 2. Project registry
 
@@ -36,12 +40,31 @@ projects:
   - id: coordinator-protocol
     path: /Users/yuansong/Documents/coordinator
     coordinator: codex
+    coordination_enabled: true
+    protocol_source: /Users/yuansong/Documents/coordinator
+    protocol_commit: <sha>
+    current_run:
+      id: run-001
+      codex_session_id: <id-or-null>
+      claude_session_id: <id-or-null>
     enabled: true
 ```
 
 注册时 dispatcher 必须验证：路径为绝对路径、Git 根与声明路径匹配、project ID 与
-`.collab/PROJECT.md` 一致、目录不是另一个已注册 project 的子目录。删除 registry entry 只停止
-调度，不删除 project。
+`.collab/PROJECT.md` 一致、目录不是另一个已注册 project 的子目录、规范化后的 project name
+和 project ID 在整个 registry 中分别唯一。已有匹配 project 直接复用；同名不同路径、同路径
+不同 ID 或重复匹配时拒绝注册，不自动创建、合并或覆盖。删除 registry entry 只停止调度，不
+删除 project。
+
+Project 是长期环境；session 属于一次 current collaboration run。一个 run 内 Codex/Claude 的
+多轮交接始终 resume 各自 current session。用户确认 run 完成后归档 session 并清空
+`current_run`；同一 project 后续新任务创建新的 run 和 session。默认每个 project 同时只有一个
+current run，复杂项目由 coordinator 明确开启独立 workstream 才可拥有多个 active run。
+
+Registry 和 bootstrap 对 Codex/Claude 对称。最先接到用户请求的一方不必自动成为 coordinator；
+它先读取用户指定值。Peer 首次参与 run 时，dispatcher 根据 `.collab/BOOTSTRAP.md` 查找对应的
+本地 project：存在且 identity 一致则复用，不存在才创建；随后创建或 resume 当前 session，
+不为每个 commit 新建 session。
 
 ## 3. Parallelism boundaries
 
@@ -98,6 +121,9 @@ per_task_max_jobs = 1
 Prompt 必须包含 project 的绝对路径、worktree、project/subproject/task、角色、触发 SHA、固定
 target SHA 和允许的动作。不得复用另一个 project 的会话上下文。日志、cursor、lease、失败计数
 也必须以 project ID 开头，禁止跨项目共享。
+
+首次启动 peer 时 prompt 还必须要求先读取 bootstrap 指定的 protocol source/commit；读取失败
+则不执行项目动作。Coordinator 从 Codex 或 Claude 发起时使用同一字段和校验流程。
 
 不同 project 即使 task ID 相同也不会冲突，因为完整 identity 是：
 

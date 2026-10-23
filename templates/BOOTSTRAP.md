@@ -1,0 +1,58 @@
+---
+project_id: "<project-id>"
+project_name: "<globally-unique-project-name>"
+run_id: "<run-id>"
+coordination_enabled: true
+coordinator: "codex|claude"
+peer_actor: "codex|claude"
+peer_initial_role: "developer|reviewer"
+project_dir: "<absolute-path>"
+repository: "<absolute-path>"
+main_ref: "refs/heads/main"
+peer_worktree: "<absolute-path>"
+peer_branch: "collab/<scope>/<actor>"
+protocol_source: "<absolute-path>"
+protocol_commit: "<sha>"
+task_id: "<task-id>"
+trigger_commit: "<sha>"
+target_commit: "<sha>"
+session_action: "create|resume"
+session_id: null
+---
+
+# Peer bootstrap
+
+## Objective
+
+<Current collaboration run objective.>
+
+Before creating anything, look up `project_name`. Reuse an existing project only when its project ID,
+dedicated directory and Git root all match this bootstrap. Treat any partial or ambiguous match as a
+conflict and stop without changing either project.
+
+## Required protocol reading
+
+- `README.md`
+- `docs/protocol.md`
+- `docs/dispatcher.md`
+- `docs/polling.md`
+- relevant files under `templates/`
+
+Do not act if `protocol_source` is unavailable or `protocol_commit` does not match.
+
+## Scope and permissions
+
+- readable: <paths>
+- writable: <paths>
+- forbidden: <paths/actions>
+- authorization holds: <none or IDs>
+
+## Expected response
+
+- action: `<design|review|respond|rereview|integrate>`
+- required trailer: `Responds-To: <trigger_commit>`
+- next actor/role: `<actor>/<role>`
+
+## Validation
+
+- <command or document check>

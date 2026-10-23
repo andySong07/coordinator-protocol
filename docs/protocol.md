@@ -49,23 +49,67 @@ Agent 不得把普通技术分歧升级给用户。分歧必须先通过证据�
 一个角色，但优先保持三职分离。对于多 subproject，Codex 和 Claude 必须交叉担任 developer
 和 reviewer；不得让同一个 Agent 同时开发和 review 同一 subproject。
 
+Coordinator 不是所有 project 的默认功能。用户每次创建 project 时必须明确选择是否启用：
+
+```text
+coordination.enabled: true | false
+coordination.coordinator: codex | claude | null
+```
+
+`enabled: false` 时，该 project 不启动本协议、dispatcher 或强制 review loop。`enabled: true`
+时，coordinator 必须由用户指定；协议不得根据项目从哪个产品发起而自行推断 coordinator。
+
 ## 3. 启动协议
 
 Coordinator 按以下顺序启动项目：
 
-1. 检查是否已有明确的 dedicated project dir。
-2. 若没有，在 `/Users/yuansong/Documents/projects/<project-id>` 创建目录；`project-id`
-   使用小写短横线格式并避免覆盖已有目录。
-3. 若目录不是 Git repo，则初始化本地 Git 仓库。
-4. 创建 `.collab/PROJECT.md` 与 `.collab/design/DESIGN.md`。
-5. 评估复杂度并写入 `PROJECT.md`：
+1. 读取本机制的 `README.md`、`docs/protocol.md`、`docs/dispatcher.md`、`docs/polling.md` 和相关
+   templates，并记录 canonical source path 与当前 protocol commit。在读取完成前不得评估、分配
+   角色或修改目标 project。来源不可访问或 commit 不匹配时停止初始化，不得凭记忆猜测规则。
+2. 按唯一 project name 查询本机 registry 和目标产品已有 project。名称比较使用去除首尾空白后的
+   Unicode case-fold 结果；显示名称和 `project_id` 均必须在 registry 中唯一。
+3. 如果 project 已存在，验证其 project ID、dedicated dir 和 Git root 一致后直接复用，不创建
+   新目录或重复 app project。如果不存在，检查是否已有明确的 dedicated project dir；若没有，
+   在 `/Users/yuansong/Documents/projects/<project-id>` 创建目录。`project-id` 使用小写短横线格式。
+   同名不同路径、同路径不同 project ID 或多个匹配项都视为冲突，停止初始化并报告，不得选择、
+   合并、覆盖或重命名其中任意一个。
+4. 若目录不是 Git repo，则初始化本地 Git 仓库。
+5. 创建 `.collab/PROJECT.md` 与 `.collab/design/DESIGN.md`。
+6. 评估复杂度并写入 `PROJECT.md`：
    - `simple`：单一交付物、边界清楚、低集成风险；
    - `standard`：多个任务或存在明显取舍，但可由一个 project 管理；
    - `complex`：多个可独立开发模块、并行收益明确或集成风险高。
-6. 指定 developer 和 reviewer，并记录到 `PROJECT.md`。
-7. 复杂项目按模块创建 `.collab/subprojects/<id>/PROJECT.md`，声明输入、输出、依赖、
+7. 指定 developer 和 reviewer，并记录到 `PROJECT.md`。
+8. 为非 coordinator 一方生成 bootstrap handoff，使其创建对应的 app project/current run，绑定
+   同一个 dedicated repo 或分配给它的 worktree。
+9. 复杂项目按模块创建 `.collab/subprojects/<id>/PROJECT.md`，声明输入、输出、依赖、
    接口和 owner。只有真正可独立验收的模块才拆分。
-8. 提交 `INIT` commit。
+10. 提交 `INIT` commit。
+
+### 对称启动与 peer bootstrap
+
+本协议对 Codex 和 Claude 完全对称：project 可以先在任一产品中发起，任一方都可由用户指定为
+coordinator。另一方不是临时无上下文 CLI；它必须创建与该 collaboration run 对应的 project/
+session 环境，并先读取同一固定版本的协议。
+
+Coordinator 通过 `.collab/BOOTSTRAP.md` 和 `INIT` commit 向 peer 提供：
+
+- project ID、title、objective 与 coordination 是否启用；
+- coordinator、peer 的 actor 与初始角色；
+- dedicated project dir 的绝对路径；
+- Git repo、共享 main、peer worktree/branch（如已创建）；
+- protocol source path 与 protocol commit；
+- collaboration run ID、当前 task、固定 target/trigger commit；
+- 允许读写范围、验证命令、授权状态；
+- peer 应创建还是 resume session，以及完成后的 `Responds-To` 要求。
+
+Peer 必须先按唯一名称查询自己的已有 app project。若存在且路径、Git root、project ID、
+protocol commit 与 bootstrap 一致，则直接复用；只有不存在时才创建。验证角色不冲突后才建立
+current session。双方共享 Git 历史和 dedicated repo，但不得共享同一个可写 checkout。“创建
+对应 project”是按需创建本产品中的环境/registry 记录，不是复制一份互相分叉的业务仓库。
+
+如果 coordinator 无法直接调用另一产品的 project API，dispatcher 使用 bootstrap 信息启动该
+产品 CLI，并把生成的 session ID 写入本机 run registry。不得要求用户手工转述日常交接信息。
 
 ## 4. 设计门禁
 
@@ -295,8 +339,10 @@ Coordinator 不应仅因不确定就询问用户；应先收集证据并选择�
 
 ## 12. 多 project dispatcher
 
-本机使用一个通用 `launchd` job，周期性启动短生命周期 dispatcher。Dispatcher 从本机 project
-registry 发现项目；每个 project 保持独立 Git repo、cursor、worktree、锁、失败计数和最终确认。
+正常路径由当前 Agent 在成功提交后调用 dispatcher 即时启动下一方。恢复路径由 Codex 和
+Claude 各自的 actor-specific `launchd` watchdog 周期性启动同一个短生命周期 dispatcher。
+Dispatcher 从本机 project registry 发现项目；每个 project 保持独立 Git repo、cursor、
+worktree、锁、失败计数和最终确认。
 
 并发边界：
 

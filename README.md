@@ -37,4 +37,5 @@
 - [templates/TASK.md](templates/TASK.md)
 - [templates/REVIEW.md](templates/REVIEW.md)
 - [templates/DECISION.md](templates/DECISION.md)
+- [templates/BOOTSTRAP.md](templates/BOOTSTRAP.md)
 
