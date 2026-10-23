@@ -141,6 +141,36 @@ Developer 对 blocking comment 不得只回复“不同意”。必须给出需�
 
 ## 7. Git 交互规则
 
+### Agent Git 身份
+
+每个 Agent 在第一次提交前必须检查 Git identity，不得依赖操作系统根据用户名和主机名自动
+推断的姓名或邮箱。Commit identity 必须能让审计者区分 Codex、Claude 和用户本人，并与
+commit body 的 `Actor` 字段一致。
+
+推荐身份：
+
+| Actor | `user.name` | `user.email` 示例 |
+|---|---|---|
+| Codex | `Codex Agent` | `codex-agent@localhost` |
+| Claude | `Claude Agent` | `claude-agent@localhost` |
+
+自动化不得修改用户的 global Git config。身份只能通过以下方式之一设置：
+
+1. 独立 repository 使用 repository-local config；
+2. 共享 repository 的独立 worktree 使用 worktree-local config；
+3. 单次提交通过命令级 `-c user.name=... -c user.email=...` 设置。
+
+提交前必须验证：
+
+```text
+git config user.name
+git config user.email
+```
+
+如果身份缺失、仍是系统自动推断值，或与 `Actor` 不一致，Agent 必须先修正本次提交的本地
+身份再继续。不得为修正身份而自动 amend 已被另一角色消费的 commit；应追加说明或修复
+commit，除非该 commit 尚未发布且 coordinator 明确判定无人消费。
+
 ### 单写者原则
 
 共享仓库可以被多个 Agent 读取，但同一工作目录在任一时刻只有一个写者。并行 subproject

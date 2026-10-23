@@ -10,6 +10,8 @@ Codex 和 Claude 各自运行一个独立 timer。Timer 只做四件事：
 4. 有可执行事件时唤醒对应 Agent，并传入 project path、task ID 和 commit SHA。
 
 Agent 才能修改交付物、Markdown、状态和 Git。这样轮询器可以保持无状态、可替换和幂等。
+Timer adapter 在启动 Agent 时还必须提供或验证与 actor 对应的 Git identity，且不得修改用户
+的 global Git config。
 
 ## 推荐周期
 

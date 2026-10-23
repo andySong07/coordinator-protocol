@@ -24,6 +24,7 @@ Codex 和 Claude 需要在一个项目内自主轮换 coordinator、developer、
 - 每个 Agent 都能被外部 timer 唤醒。
 - 同一 subproject 的 developer 与 reviewer 不同。
 - Git commit 是不可变交接点，Markdown 是完整语义载体。
+- Codex、Claude 和用户必须使用可区分的 Git identity，自动化不得依赖系统自动推断身份。
 
 ## Proposed approach
 
