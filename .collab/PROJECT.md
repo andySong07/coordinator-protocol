@@ -3,7 +3,7 @@ protocol_version: "0.3"
 project_id: "coordinator-protocol"
 title: "Codex–Claude Coordinator Protocol"
 unique_name: "coordinator-protocol"
-phase: "design"
+phase: "integration"
 status: "active"
 complexity: "standard"
 coordinator: "codex"
@@ -12,7 +12,7 @@ reviewer: "claude"
 created_at: "2026-10-23T10:00:00-07:00"
 coordination_enabled: true
 protocol_source: "/Users/yuansong/Documents/coordinator"
-protocol_commit: "7c73888d158ebd461c491ba3deb64467de556b3b"
+protocol_commit: "34a7c08410c687f469f28210a348d537bc672dbf"
 current_run_id: "run-001"
 resume_state: null
 ---
@@ -56,11 +56,11 @@ resume_state: null
 
 ## Completion criteria
 
-- [ ] Design approved by Claude reviewer
+- [x] Design approved by Claude reviewer
 - [x] Protocol draft exists
 - [x] Templates cover project, design, task, review and decision
 - [x] Wake/poll adapter contract exists (implementation is a separate task)
-- [ ] End-to-end v0.3 PR dry run passes through merge and generated review snapshot
+- [x] End-to-end v0.3 PR dry run passes through merge and generated review snapshot (`.collab/reviews/T-001.snapshot.md`)
 - [ ] User explicitly confirms project completion
 
 ## Role assignment rationale
@@ -98,5 +98,5 @@ None.
 - confirmed_delivery_commit: null
 - user_quote_or_reference: null
 - channel: null
-- delivery_summary_path: null
+- delivery_summary_path: ".collab/DELIVERY.md"
 

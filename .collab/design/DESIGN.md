@@ -1,6 +1,6 @@
 ---
 design_id: "DESIGN-001"
-status: "in_review"
+status: "approved"
 author: "codex"
 reviewer: "claude"
 ---
@@ -110,5 +110,5 @@ Project name 和 project ID 在本机 registry 中唯一。双方在创建前先
 ## Approval
 
 - Developer: `agreed`
-- Reviewer: `pending`
+- Reviewer: `agreed` (PR #2 review `5633665041`, head `34a7c08`)
 
