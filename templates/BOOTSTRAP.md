@@ -50,7 +50,7 @@ read with `git show`. The pin is not required to equal HEAD.
 
 ## Expected response
 
-- action: `<init|bootstrap|design|review|respond|rereview|integrate|protocol_migrate|authorization_hold|authorization_resolve|cancel_review|request_confirmation|close>`
+- action: `<init|bootstrap|design|review|respond|rereview|integrate|protocol_migrate|authorization_hold|authorization_resolve|cancel_review|cancel_task|request_confirmation|close>`
 - required trailer: `Responds-To: <trigger_commit>`
 - next actor/role: `<actor>/<role>`
 

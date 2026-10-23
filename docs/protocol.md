@@ -90,9 +90,11 @@ task/<project>/<subproject>/<task>
 
 Developer makes one handoff to a fixed SHA, then freezes that task. Reviewer increments `current_round` in
 its review commit and makes one review commit. Only after that commit and lock release may developer act.
-New requirements wait for the next developer turn. Cancellation uses the same task mutex and an explicit
-`cancel_review` event. It ends the active review round as `cancelled`, changes the task to `cancelled`, records
-the covering user/project cancellation, and sets both next actor and next role to `none`.
+New requirements wait for the next developer turn. Emergency re-baselining uses the same task mutex and an
+explicit `cancel_review` event: the active review round becomes `cancelled`, the task returns to `in_progress`,
+and the developer may hand off a new fixed head. Whole-task cancellation instead uses `cancel_task`, requires
+the covering user/project cancellation record, changes the task to `cancelled`, and sets both next actor and
+next role to `none`.
 
 Comment IDs never change. Status transitions:
 
@@ -117,6 +119,10 @@ Commit identity is declared exactly in project/registry for `codex`, `claude`, a
 name/email equality. Automation never changes global config. “Published” means reachable from observed main;
 reachable commits are never amended.
 
+An actor never authors or commits with another actor's declared identity, even when apparent leftovers seem to
+belong to that actor. The finder preserves unique leftovers on a recovery ref under the finder's own identity,
+records their provenance, and reports them to the declared owner for acceptance or rejection.
+
 Human summary/evidence precedes a final `git interpret-trailers` block. Required trailers:
 
 ```text
@@ -127,7 +133,7 @@ Subproject: <id|root>
 Task: <globally-unique-id|PROJECT>
 Entity: project|design|task|review|authorization
 State: <entity state|unchanged>
-Action: init|bootstrap|design|review|respond|rereview|integrate|protocol_migrate|authorization_hold|authorization_resolve|cancel_review|request_confirmation|close|none
+Action: init|bootstrap|design|review|respond|rereview|integrate|protocol_migrate|authorization_hold|authorization_resolve|cancel_review|cancel_task|request_confirmation|close|none
 Target-Commit: <sha|SELF|none>
 Responds-To: <current trigger sha|none>
 Next-Actor: codex|claude|user|none
