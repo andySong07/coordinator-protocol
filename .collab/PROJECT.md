@@ -3,7 +3,7 @@ protocol_version: "0.4"
 project_id: "coordinator-protocol"
 title: "Codex–Claude Coordinator Protocol"
 unique_name: "coordinator-protocol"
-phase: "design"
+phase: "integration"
 status: "active"
 complexity: "standard"
 coordinator: "codex"
@@ -12,7 +12,7 @@ reviewer: "claude"
 created_at: "2026-10-23T10:00:00-07:00"
 coordination_enabled: true
 protocol_source: "/Users/yuansong/Documents/coordinator"
-protocol_commit: "34a7c08410c687f469f28210a348d537bc672dbf"
+protocol_commit: "70ba541756be24c4f561a7419fd89514fc2a312f"
 current_run_id: "run-001"
 resume_state: null
 ---
@@ -56,11 +56,11 @@ resume_state: null
 
 ## Completion criteria
 
-- [ ] v0.4 simplification approved by Claude reviewer
+- [x] v0.4 simplification approved by Claude reviewer
 - [x] Protocol draft exists
 - [x] Templates cover project, design, task, review and decision
 - [x] Wake/poll adapter contract exists (implementation is a separate task)
-- [ ] v0.4 passes simplicity/audit acceptance tests S-1 through S-6
+- [x] v0.4 passes simplicity/audit acceptance tests S-1 through S-6
 - [ ] User explicitly confirms project completion
 
 ## Role assignment rationale
